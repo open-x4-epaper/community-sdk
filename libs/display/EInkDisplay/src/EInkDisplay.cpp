@@ -521,7 +521,26 @@ void EInkDisplay::setCustomLUT(bool enabled, const unsigned char* lutData) {
 }
 
 void EInkDisplay::deepSleep() {
-  // Enter deep sleep mode
+  Serial.printf("[%lu]   Preparing display for deep sleep...\n", millis());
+
+  // First, power down the display properly
+  // This shuts down the analog power rails and clock
+  if (isScreenOn) {
+    sendCommand(CMD_DISPLAY_UPDATE_CTRL1);
+    sendData(CTRL1_BYPASS_RED);  // Normal mode
+
+    sendCommand(CMD_DISPLAY_UPDATE_CTRL2);
+    sendData(0x03);  // Set ANALOG_OFF_PHASE (bit 1) and CLOCK_OFF (bit 0)
+
+    sendCommand(CMD_MASTER_ACTIVATION);
+
+    // Wait for the power-down sequence to complete
+    waitWhileBusy(" display power-down");
+
+    isScreenOn = false;
+  }
+
+  // Now enter deep sleep mode
   Serial.printf("[%lu]   Entering deep sleep mode...\n", millis());
   sendCommand(CMD_DEEP_SLEEP);
   sendData(0x01);  // Enter deep sleep
