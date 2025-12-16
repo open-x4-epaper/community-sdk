@@ -30,12 +30,17 @@ class EInkDisplay {
   void clearScreen(uint8_t color = 0xFF) const;
   void drawImage(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool fromProgmem = false) const;
 
+#ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
   void swapBuffers();
+#endif
   void setFramebuffer(const uint8_t* bwBuffer) const;
 
   void copyGrayscaleBuffers(const uint8_t* lsbBuffer, const uint8_t* msbBuffer);
   void copyGrayscaleLsbBuffers(const uint8_t* lsbBuffer);
   void copyGrayscaleMsbBuffers(const uint8_t* msbBuffer);
+#ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
+  void cleanupGrayscaleBuffers(const uint8_t* bwBuffer);
+#endif
 
   void displayBuffer(RefreshMode mode = FAST_REFRESH);
   void displayGrayBuffer(bool turnOffScreen = false);
@@ -65,10 +70,11 @@ class EInkDisplay {
 
   // Frame buffer (statically allocated)
   uint8_t frameBuffer0[BUFFER_SIZE];
-  uint8_t frameBuffer1[BUFFER_SIZE];
-
   uint8_t* frameBuffer;
+#ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
+  uint8_t frameBuffer1[BUFFER_SIZE];
   uint8_t* frameBufferActive;
+#endif
 
   // SPI settings
   SPISettings spiSettings;
