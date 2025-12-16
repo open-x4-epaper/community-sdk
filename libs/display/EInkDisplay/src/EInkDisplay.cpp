@@ -121,10 +121,6 @@ EInkDisplay::EInkDisplay(int8_t sclk, int8_t mosi, int8_t cs, int8_t dc, int8_t 
   Serial.printf("[%lu]   SCLK=%d, MOSI=%d, CS=%d, DC=%d, RST=%d, BUSY=%d\n", millis(), sclk, mosi, cs, dc, rst, busy);
 }
 
-EInkDisplay::~EInkDisplay() {
-  // No dynamic memory to clean up (buffers are statically allocated)
-}
-
 void EInkDisplay::begin() {
   Serial.printf("[%lu] EInkDisplay: begin() called\n", millis());
 
@@ -266,13 +262,11 @@ void EInkDisplay::initDisplayController() {
   Serial.printf("[%lu]   SSD1677 controller initialized\n", millis());
 }
 
-void EInkDisplay::setRamArea(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
-  const uint16_t WIDTH = 800;
-  const uint16_t HEIGHT = 480;
-  const uint8_t DATA_ENTRY_X_INC_Y_DEC = 0x01;
+void EInkDisplay::setRamArea(const uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+  constexpr uint8_t DATA_ENTRY_X_INC_Y_DEC = 0x01;
 
   // Reverse Y coordinate (gates are reversed on this display)
-  y = HEIGHT - y - h;
+  y = DISPLAY_HEIGHT - y - h;
 
   // Set data entry mode (X increment, Y decrement for reversed gates)
   sendCommand(CMD_DATA_ENTRY_MODE);
@@ -303,28 +297,28 @@ void EInkDisplay::setRamArea(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
   sendData((y + h - 1) / 256);  // high byte
 }
 
-void EInkDisplay::clearScreen(uint8_t color) {
+void EInkDisplay::clearScreen(const uint8_t color) const {
   memset(frameBuffer, color, BUFFER_SIZE);
 }
 
-void EInkDisplay::drawImage(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h,
-                            bool fromProgmem) {
+void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h,
+                            const bool fromProgmem) const {
   if (!frameBuffer) {
     Serial.printf("[%lu]   ERROR: Frame buffer not allocated!\n", millis());
     return;
   }
 
   // Calculate bytes per line for the image
-  uint16_t imageWidthBytes = w / 8;
+  const uint16_t imageWidthBytes = w / 8;
 
   // Copy image data to frame buffer
   for (uint16_t row = 0; row < h; row++) {
-    uint16_t destY = y + row;
+    const uint16_t destY = y + row;
     if (destY >= DISPLAY_HEIGHT)
       break;
 
-    uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
-    uint16_t srcOffset = row * imageWidthBytes;
+    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t srcOffset = row * imageWidthBytes;
 
     for (uint16_t col = 0; col < imageWidthBytes; col++) {
       if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
@@ -343,17 +337,17 @@ void EInkDisplay::drawImage(const uint8_t* imageData, uint16_t x, uint16_t y, ui
 
 void EInkDisplay::writeRamBuffer(uint8_t ramBuffer, const uint8_t* data, uint32_t size) {
   const char* bufferName = (ramBuffer == CMD_WRITE_RAM_BW) ? "BW" : "RED";
-  unsigned long startTime = millis();
+  const unsigned long startTime = millis();
   Serial.printf("[%lu]   Writing frame buffer to %s RAM (%lu bytes)...\n", startTime, bufferName, size);
 
   sendCommand(ramBuffer);
   sendData(data, size);
 
-  unsigned long duration = millis() - startTime;
+  const unsigned long duration = millis() - startTime;
   Serial.printf("[%lu]   %s RAM write complete (%lu ms)\n", millis(), bufferName, duration);
 }
 
-void EInkDisplay::setFramebuffer(const uint8_t* bwBuffer) {
+void EInkDisplay::setFramebuffer(const uint8_t* bwBuffer) const {
   memcpy(frameBuffer, bwBuffer, BUFFER_SIZE);
 }
 
@@ -372,7 +366,7 @@ void EInkDisplay::grayscaleRevert() {
 
   // Load the revert LUT
   setCustomLUT(true, lut_grayscale_revert);
-  refreshDisplay(FAST_REFRESH, false);
+  refreshDisplay(FAST_REFRESH);
   setCustomLUT(false);
 }
 
@@ -421,10 +415,10 @@ void EInkDisplay::displayBuffer(RefreshMode mode) {
   swapBuffers();
 
   // Refresh the display
-  refreshDisplay(mode, false);
+  refreshDisplay(mode);
 }
 
-void EInkDisplay::displayGrayBuffer(bool turnOffScreen) {
+void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
   drawGrayscale = false;
   inGrayscaleMode = true;
 
@@ -434,7 +428,7 @@ void EInkDisplay::displayGrayBuffer(bool turnOffScreen) {
   setCustomLUT(false);
 }
 
-void EInkDisplay::refreshDisplay(RefreshMode mode, bool turnOffScreen) {
+void EInkDisplay::refreshDisplay(const RefreshMode mode, const bool turnOffScreen) {
   // Configure Display Update Control 1
   sendCommand(CMD_DISPLAY_UPDATE_CTRL1);
   sendData((mode == FAST_REFRESH) ? CTRL1_NORMAL : CTRL1_BYPASS_RED);  // Configure buffer comparison mode
@@ -490,7 +484,7 @@ void EInkDisplay::refreshDisplay(RefreshMode mode, bool turnOffScreen) {
   waitWhileBusy(refreshType);
 }
 
-void EInkDisplay::setCustomLUT(bool enabled, const unsigned char* lutData) {
+void EInkDisplay::setCustomLUT(const bool enabled, const unsigned char* lutData) {
   if (enabled) {
     Serial.printf("[%lu]   Loading custom LUT...\n", millis());
 

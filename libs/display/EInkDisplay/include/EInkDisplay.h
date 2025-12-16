@@ -8,7 +8,7 @@ class EInkDisplay {
   EInkDisplay(int8_t sclk, int8_t mosi, int8_t cs, int8_t dc, int8_t rst, int8_t busy);
 
   // Destructor
-  ~EInkDisplay();
+  ~EInkDisplay() = default;
 
   // Refresh modes (guarded to avoid redefinition in test builds)
   enum RefreshMode {
@@ -21,17 +21,17 @@ class EInkDisplay {
   void begin();
 
   // Display dimensions
-  static const uint16_t DISPLAY_WIDTH = 800;
-  static const uint16_t DISPLAY_HEIGHT = 480;
-  static const uint16_t DISPLAY_WIDTH_BYTES = DISPLAY_WIDTH / 8;
-  static const uint32_t BUFFER_SIZE = DISPLAY_WIDTH_BYTES * DISPLAY_HEIGHT;
+  static constexpr uint16_t DISPLAY_WIDTH = 800;
+  static constexpr uint16_t DISPLAY_HEIGHT = 480;
+  static constexpr uint16_t DISPLAY_WIDTH_BYTES = DISPLAY_WIDTH / 8;
+  static constexpr uint32_t BUFFER_SIZE = DISPLAY_WIDTH_BYTES * DISPLAY_HEIGHT;
 
   // Frame buffer operations
-  void clearScreen(uint8_t color = 0xFF);
-  void drawImage(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool fromProgmem = false);
+  void clearScreen(uint8_t color = 0xFF) const;
+  void drawImage(const uint8_t* imageData, uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool fromProgmem = false) const;
 
   void swapBuffers();
-  void setFramebuffer(const uint8_t* bwBuffer);
+  void setFramebuffer(const uint8_t* bwBuffer) const;
 
   void copyGrayscaleBuffers(const uint8_t* lsbBuffer, const uint8_t* msbBuffer);
   void copyGrayscaleLsbBuffers(const uint8_t* lsbBuffer);
@@ -52,7 +52,7 @@ class EInkDisplay {
   void deepSleep();
 
   // Access to frame buffer
-  uint8_t* getFrameBuffer() {
+  uint8_t* getFrameBuffer() const {
     return frameBuffer;
   }
 
