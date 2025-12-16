@@ -11,6 +11,7 @@ Based on the GxEPD2_426_GDEQ0426T82 driver implementation.
 
 # Table of Contents
 - [Hardware Configuration](#hardware-configuration)
+- [Buffer Modes](#buffer-modes)
 - [SPI Communication](#spi-communication)
 - [Initialization](#initialization)
 - [RAM Operations](#ram-operations)
@@ -28,6 +29,111 @@ Based on the GxEPD2_426_GDEQ0426T82 driver implementation.
 - **Display**: 800×480 pixels (100×60 bytes = 48,000 bytes)
 - **SPI Pins**: SCLK=8, MOSI=10, CS=21, DC=4, RST=5, BUSY=6
 - **SPI Settings**: 40MHz (spec: 20MHz, but 40MHz works), MSB First, SPI Mode 0
+
+---
+
+# Buffer Modes
+
+The EInkDisplay driver supports two buffering modes, selectable at compile time:
+
+## Dual Buffer Mode (Default)
+
+**Memory usage:** 96KB (two 48KB framebuffers)
+
+- Two framebuffers in ESP32 RAM: `frameBuffer0` and `frameBuffer1`
+- Buffers alternate roles as "current" and "previous" using `swapBuffers()`
+- On each `displayBuffer()`:
+  - Current buffer → BW RAM (0x24)
+  - Previous buffer → RED RAM (0x26)
+  - Display controller compares them for differential fast refresh
+  - Buffers swap roles
+- **Advantage:** Fast buffer switching with no overhead
+- **Disadvantage:** Uses 96KB of precious RAM
+
+## Single Buffer Mode (Memory Optimized)
+
+**Memory usage:** 48KB (one 48KB framebuffer)
+
+Enable by defining `EINK_DISPLAY_SINGLE_BUFFER_MODE` before including EInkDisplay.h:
+
+```cpp
+#define EINK_DISPLAY_SINGLE_BUFFER_MODE
+#include <EInkDisplay.h>
+```
+
+Or in your build system (e.g., platformio.ini):
+
+```ini
+build_flags =
+    -D EINK_DISPLAY_SINGLE_BUFFER_MODE
+```
+
+- Single framebuffer in ESP32 RAM: `frameBuffer0`
+- Display's internal RED RAM acts as "previous frame" storage
+- On each `displayBuffer()`:
+  - **FAST_REFRESH:**
+    - New frame → BW RAM (0x24)
+    - Display refresh (compares BW vs existing RED RAM)
+    - New frame → RED RAM (0x26) - syncs for next refresh
+  - **HALF/FULL_REFRESH:**
+    - New frame → both BW RAM and RED RAM (0x24 and 0x26)
+    - Display refresh
+    - Extra RED RAM sync (already contains correct frame)
+- **Advantages:**
+  - Saves 48KB RAM (critical for ESP32-C3 with ~380KB usable)
+  - Fast refresh still works via differential updates
+- **Disadvantages:**
+  - Extra RED RAM write after each refresh (~100ms overhead)
+  - Grayscale rendering requires temporary buffer allocation
+  - `swapBuffers()` not available (not needed)
+
+## Choosing a Mode
+
+**Use Dual Buffer Mode if:**
+- RAM is plentiful
+- You want absolute minimum latency
+- You don't need every KB of RAM
+
+**Use Single Buffer Mode if:**
+- Running on memory-constrained hardware (like ESP32-C3)
+- 48KB RAM savings is critical for your application
+- ~100ms extra per refresh is acceptable
+
+## API Differences Between Modes
+
+Most of the API is identical between modes, but there are a few differences:
+
+| Feature | Dual Buffer | Single Buffer |
+|---------|-------------|---------------|
+| `getFrameBuffer()` | ✓ Available | ✓ Available |
+| `clearScreen()` | ✓ Available | ✓ Available |
+| `displayBuffer()` | ✓ Available | ✓ Available |
+| `swapBuffers()` | ✓ Available | ✗ Not available |
+| `cleanupGrayscaleBuffers()` | ✗ Not needed | ✓ Required after grayscale |
+| Memory overhead | 96KB always | 48KB + temp 48KB during grayscale |
+
+**Code that works in both modes:**
+```cpp
+display.begin();
+display.clearScreen();
+display.displayBuffer(FAST_REFRESH);
+```
+
+**Code specific to single buffer mode:**
+
+(This is not required in dual buffer mode)
+
+```cpp
+// Before grayscale
+const auto bwBuffer = static_cast<uint8_t *>(malloc(EInkDisplay::BUFFER_SIZE));
+memcpy(bwBuffer, display.getFrameBuffer(), EInkDisplay::BUFFER_SIZE);
+
+// ... grayscale rendering ...
+
+// After grayscale
+display.cleanupGrayscaleBuffers(bwBuffer);
+free(bwBuffer);      
+```
 
 ---
 
@@ -512,9 +618,13 @@ ssd1677_init();
 ssd1677_display_frame(bw_image, red_image);
 ```
 
-## Complete Example: Fast Refresh with Double Buffering
+## Complete Example: Fast Refresh with Buffering
 
-The driver implements double buffering to enable fast partial updates:
+The driver supports two buffering modes for fast partial updates:
+
+### Dual Buffer Mode (Default)
+
+**Memory usage:** 96KB (two 48KB buffers)
 
 ```cpp
 // Initialize display
@@ -538,7 +648,71 @@ display.displayBuffer(FAST_REFRESH);
 1. Two internal buffers (`frameBuffer0` and `frameBuffer1`) alternate as current/previous
 2. On `displayBuffer()`, current buffer written to BW RAM (0x24), previous to RED RAM (0x26)
 3. Controller compares buffers and only updates changed pixels
-4. Buffers swap roles after each display
+4. Buffers swap roles after each display using `swapBuffers()`
+
+### Single Buffer Mode (Memory Optimized)
+
+**Memory usage:** 48KB (one 48KB buffer) - saves 48KB RAM
+
+Enable by defining `EINK_DISPLAY_SINGLE_BUFFER_MODE` before including EInkDisplay.h.
+
+```cpp
+// Initialize display (same as dual buffer)
+display.begin();
+display.clearScreen(0xFF);
+display.displayBuffer(FULL_REFRESH);
+
+// Draw content to framebuffer
+uint8_t* fb = display.getFrameBuffer();
+// ... draw into fb ...
+
+// Fast refresh (compares with previous frame in display's RED RAM)
+display.displayBuffer(FAST_REFRESH);
+```
+
+**How it works:**
+1. Only one internal buffer (`frameBuffer0`)
+2. On `displayBuffer()`:
+   - **FAST_REFRESH:** Write new frame to BW RAM (0x24), RED RAM already contains previous frame from last refresh
+   - **HALF/FULL_REFRESH:** Write new frame to both BW and RED RAM (0x24 and 0x26)
+   - After refresh, always sync RED RAM with current frame for next differential update
+3. Controller compares BW RAM (new) vs RED RAM (old) for differential updates
+4. RED RAM acts as the "previous frame buffer" for fast refresh
+
+**Trade-offs:**
+- **Pro:** Saves 48KB of RAM (critical for ESP32-C3 with only ~380KB usable)
+- **Con:** Extra RED RAM write after each refresh (~100ms overhead)
+- **Con:** Cannot preserve screen content during grayscale rendering without external buffer
+
+### Grayscale Rendering in Single Buffer Mode
+
+Single buffer mode requires special handling for grayscale rendering since the BW framebuffer is overwritten:
+
+```cpp
+// Store BW buffer after the BW render but before grayscale render
+const auto bwBuffer = static_cast<uint8_t *>(malloc(EInkDisplay::BUFFER_SIZE));
+const auto frameBuffer = display.getFrameBuffer();
+memcpy(bwBuffer, frameBuffer, EInkDisplay::BUFFER_SIZE);
+
+// Perform grayscale rendering (overwrites BW and RED RAM)
+display.clearScreen(0x00);
+// ... render grayscale LSB to frameBuffer ...
+display.copyGrayscaleMsbBuffers(frameBuffer);
+
+display.clearScreen(0x00);
+// ... render grayscale MSB to frameBuffer ...
+display.copyGrayscaleLsbBuffers(frameBuffer);
+
+// Display grays
+display.displayGrayBuffer();
+
+// After grayscale render
+display.cleanupGrayscaleBuffers(bwBuffer);
+free(bwBuffer);
+```
+
+The `cleanupGrayscaleBuffers()` method restores the BW buffer to both the framebuffer and RED RAM, ensuring proper state 
+for subsequent fast refreshes
 
 ## Auto-Write Commands for Fast Clear
 
@@ -638,6 +812,11 @@ This is much faster than writing 48,000 bytes manually during initialization.
 - All X coordinates and widths must be multiples of 8 (byte boundaries)
 - Y coordinates are reversed in hardware (gates bottom-to-top)
 - RAM auto-increments after each byte transfer
-- Total RAM size: 48,000 bytes (800×480 ÷ 8)
-- Dual-buffer system enables differential partial updates
+- Display controller internal RAM: 96,000 bytes (800×480 ÷ 8 * 2 buffers: BW + RED)
+- ESP32 buffer memory usage:
+  - **Dual buffer mode:** 96KB (two 48KB buffers for fast buffer swapping)
+  - **Single buffer mode:** 48KB (one 48KB buffer, uses display's RED RAM for differential)
+- Differential partial updates require RED RAM to contain the previous frame
 - First write after init should be full refresh to clear ghost images
+- Single buffer mode adds ~100ms overhead per refresh (extra RED RAM sync)
+- Grayscale rendering in single buffer mode requires temporary 48KB allocation
