@@ -452,6 +452,79 @@ void EInkDisplay::displayBuffer(RefreshMode mode) {
 #endif
 }
 
+void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
+  Serial.printf("[%lu]   Displaying window at (%d,%d) size (%dx%d)\n", millis(), x, y, w, h);
+
+  // Validate bounds
+  if (x + w > DISPLAY_WIDTH || y + h > DISPLAY_HEIGHT) {
+    Serial.printf("[%lu]   ERROR: Window bounds exceed display dimensions!\n", millis());
+    return;
+  }
+
+  // Validate byte alignment
+  if (x % 8 != 0 || w % 8 != 0) {
+    Serial.printf("[%lu]   ERROR: Window x and width must be byte-aligned (multiples of 8)!\n", millis());
+    return;
+  }
+
+  if (!frameBuffer) {
+    Serial.printf("[%lu]   ERROR: Frame buffer not allocated!\n", millis());
+    return;
+  }
+
+  // displayWindow is not supported while the rest of the screen has grayscale content, revert it
+  if (inGrayscaleMode) {
+    inGrayscaleMode = false;
+    grayscaleRevert();
+  }
+
+  // Calculate window buffer size
+  const uint16_t windowWidthBytes = w / 8;
+  const uint32_t windowBufferSize = windowWidthBytes * h;
+
+  Serial.printf("[%lu]   Window buffer size: %lu bytes (%d x %d pixels)\n", millis(), windowBufferSize, w, h);
+
+  // Allocate temporary buffer on stack
+  std::vector<uint8_t> windowBuffer(windowBufferSize);
+
+  // Extract window region from frame buffer
+  for (uint16_t row = 0; row < h; row++) {
+    const uint16_t srcY = y + row;
+    const uint16_t srcOffset = srcY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t dstOffset = row * windowWidthBytes;
+    memcpy(&windowBuffer[dstOffset], &frameBuffer[srcOffset], windowWidthBytes);
+  }
+
+  // Configure RAM area for window
+  setRamArea(x, y, w, h);
+
+  // Write to BW RAM (current frame)
+  writeRamBuffer(CMD_WRITE_RAM_BW, windowBuffer.data(), windowBufferSize);
+
+#ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
+  // Dual buffer: Extract window from frameBufferActive (previous frame)
+  std::vector<uint8_t> previousWindowBuffer(windowBufferSize);
+  for (uint16_t row = 0; row < h; row++) {
+    const uint16_t srcY = y + row;
+    const uint16_t srcOffset = srcY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t dstOffset = row * windowWidthBytes;
+    memcpy(&previousWindowBuffer[dstOffset], &frameBufferActive[srcOffset], windowWidthBytes);
+  }
+  writeRamBuffer(CMD_WRITE_RAM_RED, previousWindowBuffer.data(), windowBufferSize);
+#endif
+
+  // Perform fast refresh
+  refreshDisplay(FAST_REFRESH);
+
+#ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
+  // Post-refresh: Sync RED RAM with current window (for next fast refresh)
+  setRamArea(x, y, w, h);
+  writeRamBuffer(CMD_WRITE_RAM_RED, windowBuffer.data(), windowBufferSize);
+#endif
+
+  Serial.printf("[%lu]   Window display complete\n", millis());
+}
+
 void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
   drawGrayscale = false;
   inGrayscaleMode = true;
