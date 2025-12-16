@@ -437,6 +437,10 @@ void EInkDisplay::displayBuffer(RefreshMode mode) {
 #endif
   }
 
+#ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
+  swapBuffers();
+#endif
+
   // Refresh the display
   refreshDisplay(mode);
 
