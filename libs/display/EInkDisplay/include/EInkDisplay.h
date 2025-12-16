@@ -43,6 +43,7 @@ class EInkDisplay {
 #endif
 
   void displayBuffer(RefreshMode mode = FAST_REFRESH);
+  // EXPERIMENTAL: Windowed update - display only a rectangular region
   void displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
   void displayGrayBuffer(bool turnOffScreen = false);
 

@@ -452,6 +452,9 @@ void EInkDisplay::displayBuffer(RefreshMode mode) {
 #endif
 }
 
+// EXPERIMENTAL: Windowed update support
+// Displays only a rectangular region of the frame buffer, preserving the rest of the screen.
+// Requirements: x and w must be byte-aligned (multiples of 8 pixels)
 void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
   Serial.printf("[%lu]   Displaying window at (%d,%d) size (%dx%d)\n", millis(), x, y, w, h);
 
