@@ -1,24 +1,20 @@
 #include "SDCardManager.h"
 
-#include <SD.h>
-#include <SPI.h>
+namespace {
+constexpr uint8_t SD_CS = 12;
+constexpr uint32_t SPI_FQ = 40000000;
+}
 
-SDCardManager::SDCardManager(uint8_t epd_sclk, uint8_t sd_miso, uint8_t epd_mosi, uint8_t sd_cs, uint8_t eink_cs)
-    : epd_sclk(epd_sclk), sd_miso(sd_miso), epd_mosi(epd_mosi), sd_cs(sd_cs), eink_cs(eink_cs), initialized(false) {}
+SDCardManager SDCardManager::instance;
+
+SDCardManager::SDCardManager() : sd() {}
 
 bool SDCardManager::begin() {
-  pinMode(eink_cs, OUTPUT);
-  digitalWrite(eink_cs, HIGH);
-
-  pinMode(sd_cs, OUTPUT);
-  digitalWrite(sd_cs, HIGH);
-
-  SPI.begin(epd_sclk, sd_miso, epd_mosi, sd_cs);
-  if (!SD.begin(sd_cs, SPI, 40000000)) {
-    Serial.print("\n SD card not detected\n");
+  if (!sd.begin(SD_CS, SPI_FQ)) {
+    Serial.printf("[%lu] [SD] SD card not detected\n", millis());
     initialized = false;
   } else {
-    Serial.print("\n SD card detected\n");
+    Serial.printf("[%lu] [SD] SD card detected\n", millis());
     initialized = true;
   }
 
@@ -29,31 +25,33 @@ bool SDCardManager::ready() const {
   return initialized;
 }
 
-std::vector<String> SDCardManager::listFiles(const char* path, int maxFiles) {
+std::vector<String> SDCardManager::listFiles(const char* path, const int maxFiles) {
   std::vector<String> ret;
   if (!initialized) {
-    Serial.println("SDCardManager: not initialized, returning empty list");
+    Serial.printf("[%lu] [SD] not initialized, returning empty list\n", millis());
     return ret;
   }
 
-  File root = SD.open(path);
+  auto root = sd.open(path);
   if (!root) {
-    Serial.println("Failed to open directory.");
+    Serial.printf("[%lu] [SD] Failed to open directory\n", millis());
     return ret;
   }
   if (!root.isDirectory()) {
-    Serial.println("Path is not a directory.");
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     root.close();
     return ret;
   }
 
   int count = 0;
-  for (File f = root.openNextFile(); f && count < maxFiles; f = root.openNextFile()) {
+  char name[128];
+  for (auto f = root.openNextFile(); f && count < maxFiles; f = root.openNextFile()) {
     if (f.isDirectory()) {
       f.close();
       continue;
     }
-    ret.push_back(String(f.name()));
+    f.getName(name, sizeof(name));
+    ret.emplace_back(name);
     f.close();
     count++;
   }
@@ -63,21 +61,20 @@ std::vector<String> SDCardManager::listFiles(const char* path, int maxFiles) {
 
 String SDCardManager::readFile(const char* path) {
   if (!initialized) {
-    Serial.println("SDCardManager: not initialized; cannot read file");
-    return String("");
+    Serial.printf("[%lu] [SD] not initialized; cannot read file\n", millis());
+    return {""};
   }
 
-  File f = SD.open(path);
-  if (!f) {
-    Serial.printf("Failed to open file: %s\n", path);
-    return String("");
+  FsFile f;
+  if (!openFileForRead("SD", path, f)) {
+    return {""};
   }
 
   String content = "";
-  size_t maxSize = 50000;  // Limit to 50KB
+  constexpr size_t maxSize = 50000;  // Limit to 50KB
   size_t readSize = 0;
   while (f.available() && readSize < maxSize) {
-    char c = (char)f.read();
+    const char c = static_cast<char>(f.read());
     content += c;
     readSize++;
   }
@@ -85,26 +82,26 @@ String SDCardManager::readFile(const char* path) {
   return content;
 }
 
-bool SDCardManager::readFileToStream(const char* path, Print& out, size_t chunkSize) {
+bool SDCardManager::readFileToStream(const char* path, Print& out, const size_t chunkSize) {
   if (!initialized) {
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     Serial.println("SDCardManager: not initialized; cannot read file");
     return false;
   }
 
-  File f = SD.open(path);
-  if (!f) {
-    Serial.printf("Failed to open file: %s\n", path);
+  FsFile f;
+  if (!openFileForRead("SD", path, f)) {
     return false;
   }
 
-  const size_t localBufSize = 256;
+  constexpr size_t localBufSize = 256;
   uint8_t buf[localBufSize];
-  size_t toRead = (chunkSize == 0) ? localBufSize : (chunkSize < localBufSize ? chunkSize : localBufSize);
+  const size_t toRead = (chunkSize == 0) ? localBufSize : (chunkSize < localBufSize ? chunkSize : localBufSize);
 
   while (f.available()) {
-    int r = f.read(buf, toRead);
+    const int r = f.read(buf, toRead);
     if (r > 0) {
-      out.write(buf, (size_t)r);
+      out.write(buf, static_cast<size_t>(r));
     } else {
       break;
     }
@@ -114,32 +111,32 @@ bool SDCardManager::readFileToStream(const char* path, Print& out, size_t chunkS
   return true;
 }
 
-size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, size_t bufferSize, size_t maxBytes) {
+size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const size_t bufferSize, const size_t maxBytes) {
   if (!buffer || bufferSize == 0)
     return 0;
   if (!initialized) {
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     Serial.println("SDCardManager: not initialized; cannot read file");
     buffer[0] = '\0';
     return 0;
   }
 
-  File f = SD.open(path);
-  if (!f) {
-    Serial.printf("Failed to open file: %s\n", path);
+  FsFile f;
+  if (!openFileForRead("SD", path, f)) {
     buffer[0] = '\0';
     return 0;
   }
 
-  size_t maxToRead = (maxBytes == 0) ? (bufferSize - 1) : min(maxBytes, bufferSize - 1);
+  const size_t maxToRead = (maxBytes == 0) ? (bufferSize - 1) : min(maxBytes, bufferSize - 1);
   size_t total = 0;
-  const size_t chunk = 64;
 
   while (f.available() && total < maxToRead) {
-    size_t want = maxToRead - total;
-    size_t readLen = (want < chunk) ? want : chunk;
-    int r = f.read((uint8_t*)(buffer + total), readLen);
+    constexpr size_t chunk = 64;
+    const size_t want = maxToRead - total;
+    const size_t readLen = (want < chunk) ? want : chunk;
+    const int r = f.read(buffer + total, readLen);
     if (r > 0) {
-      total += (size_t)r;
+      total += static_cast<size_t>(r);
     } else {
       break;
     }
@@ -152,37 +149,41 @@ size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, size_t bu
 
 bool SDCardManager::writeFile(const char* path, const String& content) {
   if (!initialized) {
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     Serial.println("SDCardManager: not initialized; cannot write file");
     return false;
   }
 
   // Remove existing file so we perform an overwrite rather than append
-  if (SD.exists(path)) {
-    SD.remove(path);
+  if (sd.exists(path)) {
+    sd.remove(path);
   }
 
-  File f = SD.open(path, FILE_WRITE);
-  if (!f) {
+  FsFile f;
+  if (!openFileForWrite("SD", path, f)) {
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     Serial.printf("Failed to open file for write: %s\n", path);
     return false;
   }
 
-  size_t written = f.print(content);
+  const size_t written = f.print(content);
   f.close();
-  return (written == content.length());
+  return written == content.length();
 }
 
 bool SDCardManager::ensureDirectoryExists(const char* path) {
   if (!initialized) {
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     Serial.println("SDCardManager: not initialized; cannot create directory");
     return false;
   }
 
   // Check if directory already exists
-  if (SD.exists(path)) {
-    File dir = SD.open(path);
+  if (sd.exists(path)) {
+    FsFile dir = sd.open(path);
     if (dir && dir.isDirectory()) {
       dir.close();
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
       Serial.printf("Directory already exists: %s\n", path);
       return true;
     }
@@ -190,11 +191,87 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
   }
 
   // Create the directory
-  if (SD.mkdir(path)) {
+  if (sd.mkdir(path)) {
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     Serial.printf("Created directory: %s\n", path);
     return true;
   } else {
+    Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     Serial.printf("Failed to create directory: %s\n", path);
     return false;
   }
+}
+
+bool SDCardManager::openFileForRead(const char* moduleName, const char* path, FsFile& file) {
+  if (!sd.exists(path)) {
+    Serial.printf("[%lu] [%s] File does not exist: %s\n", millis(), moduleName, path);
+    return false;
+  }
+
+  file = sd.open(path, FILE_READ);
+  if (!file) {
+    Serial.printf("[%lu] [%s] Failed to open file for reading: %s\n", millis(), moduleName, path);
+    return false;
+  }
+  return true;
+}
+
+bool SDCardManager::openFileForRead(const char* moduleName, const std::string& path, FsFile& file) {
+  return openFileForRead(moduleName, path.c_str(), file);
+}
+
+bool SDCardManager::openFileForRead(const char* moduleName, const String& path, FsFile& file) {
+  return openFileForRead(moduleName, path.c_str(), file);
+}
+
+bool SDCardManager::openFileForWrite(const char* moduleName, const char* path, FsFile& file) {
+  file = sd.open(path, FILE_WRITE);
+  if (!file) {
+    Serial.printf("[%lu] [%s] Failed to open file for writing: %s\n", millis(), moduleName, path);
+    return false;
+  }
+  return true;
+}
+
+bool SDCardManager::openFileForWrite(const char* moduleName, const std::string& path, FsFile& file) {
+  return openFileForWrite(moduleName, path.c_str(), file);
+}
+
+bool SDCardManager::openFileForWrite(const char* moduleName, const String& path, FsFile& file) {
+  return openFileForWrite(moduleName, path.c_str(), file);
+}
+
+bool SDCardManager::removeDir(const char* path) {
+  // 1. Open the directory
+  auto dir = sd.open(path);
+  if (!dir) {
+    return false;
+  }
+  if (!dir.isDirectory()) {
+    return false;
+  }
+
+  auto file = dir.openNextFile();
+  char name[128];
+  while (file) {
+    String filePath = path;
+    if (!filePath.endsWith("/")) {
+      filePath += "/";
+    }
+    file.getName(name, sizeof(name));
+    filePath += name;
+
+    if (file.isDirectory()) {
+      if (!removeDir(filePath.c_str())) {
+        return false;
+      }
+    } else {
+      if (!sd.remove(filePath.c_str())) {
+        return false;
+      }
+    }
+    file = dir.openNextFile();
+  }
+
+  return sd.rmdir(path);
 }

@@ -1,13 +1,12 @@
-#ifndef SDCARD_MANAGER_H
-#define SDCARD_MANAGER_H
+#pragma once
 
-#include <Arduino.h>
-
+#include <WString.h>
 #include <vector>
+#include <SdFat.h>
 
 class SDCardManager {
  public:
-  SDCardManager(uint8_t epd_sclk, uint8_t sd_miso, uint8_t epd_mosi, uint8_t sd_cs, uint8_t eink_cs);
+  SDCardManager();
   bool begin();
   bool ready() const;
   std::vector<String> listFiles(const char* path = "/", int maxFiles = 200);
@@ -25,13 +24,27 @@ class SDCardManager {
   // Ensure a directory exists, creating it if necessary. Returns true on success.
   bool ensureDirectoryExists(const char* path);
 
+  FsFile open(const char* path, const oflag_t oflag = O_RDONLY) { return sd.open(path, oflag); }
+  bool mkdir(const char* path, const bool pFlag = true) { return sd.mkdir(path, pFlag); }
+  bool exists(const char* path) { return sd.exists(path); }
+  bool remove(const char* path) { return sd.remove(path); }
+  bool rmdir(const char* path) { return sd.rmdir(path); }
+
+  bool openFileForRead(const char* moduleName, const char* path, FsFile& file);
+  bool openFileForRead(const char* moduleName, const std::string& path, FsFile& file);
+  bool openFileForRead(const char* moduleName, const String& path, FsFile& file);
+  bool openFileForWrite(const char* moduleName, const char* path, FsFile& file);
+  bool openFileForWrite(const char* moduleName, const std::string& path, FsFile& file);
+  bool openFileForWrite(const char* moduleName, const String& path, FsFile& file);
+  bool removeDir(const char* path);
+
+ static SDCardManager& getInstance() { return instance; }
+
  private:
-  uint8_t epd_sclk;
-  uint8_t sd_miso;
-  uint8_t epd_mosi;
-  uint8_t sd_cs;
-  uint8_t eink_cs;
+  static SDCardManager instance;
+
   bool initialized = false;
+  SdFat sd;
 };
 
-#endif
+#define SdMan SDCardManager::getInstance()
