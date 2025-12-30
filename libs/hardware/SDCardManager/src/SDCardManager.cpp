@@ -208,7 +208,7 @@ bool SDCardManager::openFileForRead(const char* moduleName, const char* path, Fs
     return false;
   }
 
-  file = sd.open(path, FILE_READ);
+  file = sd.open(path, O_RDONLY);
   if (!file) {
     Serial.printf("[%lu] [%s] Failed to open file for reading: %s\n", millis(), moduleName, path);
     return false;
@@ -225,7 +225,7 @@ bool SDCardManager::openFileForRead(const char* moduleName, const String& path, 
 }
 
 bool SDCardManager::openFileForWrite(const char* moduleName, const char* path, FsFile& file) {
-  file = sd.open(path, FILE_WRITE);
+  file = sd.open(path, O_RDWR | O_CREAT | O_TRUNC);
   if (!file) {
     Serial.printf("[%lu] [%s] Failed to open file for writing: %s\n", millis(), moduleName, path);
     return false;
