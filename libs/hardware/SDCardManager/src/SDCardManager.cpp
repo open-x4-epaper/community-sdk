@@ -275,3 +275,30 @@ bool SDCardManager::removeDir(const char* path) {
 
   return sd.rmdir(path);
 }
+
+bool SDCardManager::format(Print* pr) {
+  if (!initialized) {
+    if (pr) pr->println("[SD] SDCardManager: not initialized");
+    return false;
+  }
+
+  Serial.printf("[%lu] [SD] Starting format...\n", millis());
+  if (pr) pr->println("[SD] Formatting card, please wait...");
+
+  // SdFat's format() method handles FAT16/FAT32/exFAT selection automatically
+  // based on card size (<=32GB = FAT, >32GB = exFAT)
+  bool success = sd.format(pr);
+
+  if (success) {
+    Serial.printf("[%lu] [SD] Format succeeded, re-initializing...\n", millis());
+    if (pr) pr->println("[SD] Format complete, remounting...");
+    // Re-initialize after format to mount the new filesystem
+    initialized = false;
+    success = begin();
+  } else {
+    Serial.printf("[%lu] [SD] Format failed\n", millis());
+    if (pr) pr->println("[SD] Format failed!");
+  }
+
+  return success;
+}
