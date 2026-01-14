@@ -1,9 +1,10 @@
 #pragma once
 
-#include <WString.h>
-#include <vector>
-#include <string>
 #include <SdFat.h>
+#include <WString.h>
+
+#include <string>
+#include <vector>
 
 class SDCardManager {
  public:
@@ -42,13 +43,12 @@ class SDCardManager {
 
   /**
    * Format the SD card as FAT32/exFAT (auto-selected based on size)
-   * WARNING: This erases ALL data on the card!
    * @param pr Optional Print destination for progress output (e.g., &Serial)
    * @return true on success, false on failure
    */
   bool format(Print* pr = nullptr);
 
- static SDCardManager& getInstance() { return instance; }
+  static SDCardManager& getInstance() { return instance; }
 
  private:
   static SDCardManager instance;
