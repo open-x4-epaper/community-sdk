@@ -1,5 +1,7 @@
 #include "SDCardManager.h"
 
+#include <ExFatLib/ExFatLib.h>
+
 namespace {
 constexpr uint8_t SD_CS = 12;
 constexpr uint32_t SPI_FQ = 40000000;
@@ -282,12 +284,20 @@ bool SDCardManager::format(Print* pr) {
     return false;
   }
 
-  Serial.printf("[%lu] [SD] Starting format...\n", millis());
-  if (pr) pr->println("[SD] Formatting card, please wait...");
+  Serial.printf("[%lu] [SD] Starting exFAT format...\n", millis());
+  if (pr) pr->println("[SD] Formatting card as exFAT, please wait...");
 
-  // SdFat's format() method handles FAT16/FAT32/exFAT selection automatically
-  // based on card size (<=32GB = FAT, >32GB = exFAT)
-  bool success = sd.format(pr);
+  // Get the card and sector buffer - sd.end() unmounts and returns a 512-byte buffer
+  uint8_t* secBuf = sd.end();
+  SdCard* card = sd.card();
+  if (!secBuf || !card) {
+    if (pr) pr->println("[SD] Failed to get card or buffer");
+    return false;
+  }
+
+  // Use ExFatFormatter directly (always exFAT, regardless of card size)
+  ExFatFormatter formatter;
+  bool success = formatter.format(card, secBuf, pr);
 
   if (success) {
     Serial.printf("[%lu] [SD] Format succeeded, re-initializing...\n", millis());
