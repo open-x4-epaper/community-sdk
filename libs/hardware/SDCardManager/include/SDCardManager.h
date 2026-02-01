@@ -2,6 +2,7 @@
 
 #include <WString.h>
 #include <vector>
+#include <string>
 #include <SdFat.h>
 
 class SDCardManager {
@@ -29,6 +30,7 @@ class SDCardManager {
   bool exists(const char* path) { return sd.exists(path); }
   bool remove(const char* path) { return sd.remove(path); }
   bool rmdir(const char* path) { return sd.rmdir(path); }
+  bool rename(const char* path, const char* newPath) { return sd.rename(path, newPath); }
 
   bool openFileForRead(const char* moduleName, const char* path, FsFile& file);
   bool openFileForRead(const char* moduleName, const std::string& path, FsFile& file);
