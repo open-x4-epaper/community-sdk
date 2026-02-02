@@ -343,6 +343,38 @@ void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const ui
   if (Serial) Serial.printf("[%lu]   Image drawn to frame buffer\n", millis());
 }
 
+// Draws only black pixels from the image, leaves white pixels clear (unchanged in framebuffer)
+void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h,
+                                     const bool fromProgmem) const {
+  if (!frameBuffer) {
+    Serial.printf("[%lu]   ERROR: Frame buffer not allocated!\n", millis());
+    return;
+  }
+
+  // Calculate bytes per line for the image
+  const uint16_t imageWidthBytes = w / 8;
+
+  // Copy only black pixels to frame buffer
+  for (uint16_t row = 0; row < h; row++) {
+    const uint16_t destY = y + row;
+    if (destY >= DISPLAY_HEIGHT)
+      break;
+
+    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t srcOffset = row * imageWidthBytes;
+
+    for (uint16_t col = 0; col < imageWidthBytes; col++) {
+      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
+        break;
+
+      uint8_t srcByte = fromProgmem ? pgm_read_byte(&imageData[srcOffset + col]) : imageData[srcOffset + col];
+      frameBuffer[destOffset + col] &= srcByte;
+    }
+  }
+
+  Serial.printf("[%lu]   Transparent image drawn to frame buffer\n", millis());
+}
+
 void EInkDisplay::writeRamBuffer(uint8_t ramBuffer, const uint8_t* data, uint32_t size) {
   const char* bufferName = (ramBuffer == CMD_WRITE_RAM_BW) ? "BW" : "RED";
   const unsigned long startTime = millis();
