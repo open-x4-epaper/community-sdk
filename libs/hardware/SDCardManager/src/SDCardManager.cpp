@@ -3,6 +3,18 @@
 namespace {
 constexpr uint8_t SD_CS = 12;
 constexpr uint32_t SPI_FQ = 40000000;
+
+bool calculateSDUsagePercent(const uint32_t totalClusters, const uint32_t freeClusters, uint8_t* outPercent) {
+  if (outPercent == nullptr || totalClusters == 0 || freeClusters > totalClusters) {
+    return false;
+  }
+
+  const uint32_t usedClusters = totalClusters - freeClusters;
+  const uint64_t roundedPercent =
+      (static_cast<uint64_t>(usedClusters) * 100ULL + totalClusters / 2ULL) / totalClusters;
+  *outPercent = static_cast<uint8_t>(roundedPercent > 100ULL ? 100ULL : roundedPercent);
+  return true;
+}
 }
 
 SDCardManager SDCardManager::instance;
@@ -200,6 +212,26 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
     if (Serial) Serial.printf("Failed to create directory: %s\n", path);
     return false;
   }
+}
+
+bool SDCardManager::getUsageInfo(UsageInfo& usageInfo) {
+  usageInfo = UsageInfo{};
+  if (!initialized) {
+    return false;
+  }
+
+  const uint32_t totalClusters = sd.clusterCount();
+  const uint32_t freeClusters = sd.freeClusterCount();
+  uint8_t usedPercent = 0;
+  if (!calculateSDUsagePercent(totalClusters, freeClusters, &usedPercent)) {
+    return false;
+  }
+
+  usageInfo.valid = true;
+  usageInfo.usedPercent = usedPercent;
+  usageInfo.totalClusters = totalClusters;
+  usageInfo.usedClusters = totalClusters - freeClusters;
+  return true;
 }
 
 bool SDCardManager::openFileForRead(const char* moduleName, const char* path, FsFile& file) {
