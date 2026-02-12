@@ -4,9 +4,17 @@
 #include <vector>
 #include <string>
 #include <SdFat.h>
+#include <cstdint>
 
 class SDCardManager {
  public:
+  struct UsageInfo {
+    bool valid = false;
+    uint8_t usedPercent = 0;
+    uint32_t usedClusters = 0;
+    uint32_t totalClusters = 0;
+  };
+
   SDCardManager();
   bool begin();
   bool ready() const;
@@ -39,6 +47,7 @@ class SDCardManager {
   bool openFileForWrite(const char* moduleName, const std::string& path, FsFile& file);
   bool openFileForWrite(const char* moduleName, const String& path, FsFile& file);
   bool removeDir(const char* path);
+  bool getUsageInfo(UsageInfo& usageInfo);
 
  static SDCardManager& getInstance() { return instance; }
 
