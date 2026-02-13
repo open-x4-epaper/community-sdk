@@ -180,7 +180,10 @@ void EInkDisplay::setDisplayDimensions(uint16_t width, uint16_t height) {
   bufferSize = displayWidthBytes * height;
 }
 
-void EInkDisplay::requestResync() { _x3ForceFullSyncNext = _x3ReverseExactMode; }
+void EInkDisplay::requestResync(uint8_t settlePasses) {
+  _x3ForceFullSyncNext = _x3Mode;
+  _x3ForcedConditionPassesNext = _x3Mode ? settlePasses : 0;
+}
 
 EInkDisplay::EInkDisplay(int8_t sclk, int8_t mosi, int8_t cs, int8_t dc, int8_t rst, int8_t busy)
     : _sclk(sclk),
@@ -209,9 +212,10 @@ void EInkDisplay::begin() {
   // Initialize to white
   memset(frameBuffer0, 0xFF, bufferSize);
   _x3PrevFrameValid = false;
-  _x3ReverseExactMode = (_dc == 4 && displayWidth == 792 && displayHeight == 528);
-  _x3InitialFullSyncsRemaining = _x3ReverseExactMode ? 2 : 0;
+  _x3Mode = (_dc == 4 && displayWidth == 792 && displayHeight == 528);
+  _x3InitialFullSyncsRemaining = _x3Mode ? 2 : 0;
   _x3ForceFullSyncNext = false;
+    _x3ForcedConditionPassesNext = 0;
 #ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
   if (Serial) Serial.printf("[%lu]   Static frame buffer (%lu bytes)\n", millis(), bufferSize);
 #else
@@ -223,7 +227,7 @@ void EInkDisplay::begin() {
 
   // Initialize SPI with custom pins
   SPI.begin(_sclk, -1, _mosi, _cs);
-  const uint32_t spiHz = _x3ReverseExactMode ? 10000000 : 40000000;
+  const uint32_t spiHz = _x3Mode ? 10000000 : 40000000;
   spiSettings = SPISettings(spiHz, MSBFIRST, SPI_MODE0);
   if (Serial) Serial.printf("[%lu]   SPI initialized at %lu Hz, Mode 0\n", millis(), spiHz);
 
@@ -260,7 +264,7 @@ void EInkDisplay::resetDisplay() {
   digitalWrite(_rst, HIGH);
   delay(20);
   if (Serial) Serial.printf("[%lu]   Display reset complete\n", millis());
-  if (_x3ReverseExactMode) {
+  if (_x3Mode) {
     delay(50);
     return;
   }
@@ -268,7 +272,7 @@ void EInkDisplay::resetDisplay() {
 
 void EInkDisplay::waitForRefresh(const char* comment) {
   unsigned long start = millis();
-  if (!_x3ReverseExactMode) {
+  if (!_x3Mode) {
     while (digitalRead(_busy) == HIGH) {
       delay(1);
       if (millis() - start > 30000) break;
@@ -320,7 +324,7 @@ void EInkDisplay::sendData(const uint8_t* data, uint16_t length) {
 
 void EInkDisplay::waitWhileBusy(const char* comment) {
   unsigned long start = millis();
-  if (!_x3ReverseExactMode) {
+  if (!_x3Mode) {
     while (digitalRead(_busy) == HIGH) {
       delay(1);
       if (millis() - start > 30000) break;
@@ -347,7 +351,7 @@ void EInkDisplay::waitWhileBusy(const char* comment) {
 
 void EInkDisplay::initDisplayController() {
 #ifndef X3_USE_X4_INIT
-  if (_x3ReverseExactMode) {
+  if (_x3Mode) {
     sendCommand(0x00);
     sendData(0x3F);
     sendData(0x08);
@@ -623,7 +627,7 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     grayscaleRevert();
   }
 
-  if (_x3ReverseExactMode) {
+  if (_x3Mode) {
     // X3 wake policy: first redraw after panel-off should be full.
     if (!isScreenOn) {
       mode = FULL_REFRESH;
@@ -705,8 +709,9 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     // Keep FAST partial for small UI deltas only.
     // Use changed-byte count (not bounding-box area) so sparse Home updates
     // remain fast-partial even when changes are in multiple distant regions.
-    constexpr uint32_t X3_PARTIAL_DIFF_MAX_BYTES = 12000;
+    constexpr uint32_t X3_PARTIAL_DIFF_MAX_BYTES = 28000;
     const bool smallDelta = diffBytes <= X3_PARTIAL_DIFF_MAX_BYTES;
+    const bool forcedFullSync = _x3ForceFullSyncNext;
     const bool runFastPartial =
         canRunFastPartial && fastMode && _x3PrevFrameValid && usePartialWindow && smallDelta && !_x3ForceFullSyncNext;
     if (Serial) {
@@ -759,7 +764,10 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     if (runFastPartial) sendCommandDataByteX3(0x50, 0x29, 0x07);
     else sendCommandDataByteX3(0x50, 0xA9, 0x07);
 
-    if (!isScreenOn) {
+    constexpr uint32_t X3_CMD04_FULL_DIFF_MIN_BYTES = 30000;
+    const bool needCmd04 = !isScreenOn || turnOffScreen || forcedFullSync || (!runFastPartial && !fastMode) ||
+                           (!runFastPartial && fastMode && diffBytes >= X3_CMD04_FULL_DIFF_MIN_BYTES);
+    if (needCmd04) {
       sendCommand(0x04);
       waitForRefresh(" X3_CMD04");
       isScreenOn = true;
@@ -770,8 +778,13 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     waitForRefresh(" X3_CMD12");
     if (!fastMode) delay(200);
 
-    const bool forcedFullSync = _x3ForceFullSyncNext;
-    const bool runPostHomeConditioning = (!runFastPartial && forcedFullSync);
+    // One-time light settle after the first major full-sync improves early
+    // page-turn quality on X3 without paying the old 6-pass cost.
+    uint8_t postConditionPasses = 0;
+    if (!runFastPartial) {
+      if (forcedFullSync) postConditionPasses = _x3ForcedConditionPassesNext;
+      else if (_x3InitialFullSyncsRemaining == 1) postConditionPasses = 1;
+    }
 
     memcpy(_x3PrevFrame, frameBuffer, bufferSize);
     _x3PrevFrameValid = true;
@@ -779,8 +792,9 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
       _x3InitialFullSyncsRemaining--;
     }
     _x3ForceFullSyncNext = false;
+    _x3ForcedConditionPassesNext = 0;
 
-    if (runPostHomeConditioning) {
+    if (postConditionPasses > 0) {
       // Mimic the empirically observed "settles after several PART updates" effect
       // immediately after the first Home full sync so the user sees a stable UI sooner.
       const uint16_t xStart = 0;
@@ -799,8 +813,8 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
       sendCommandDataX3(0x24, lut_x3_bb_full, 42);
       sendCommandDataByteX3(0x50, 0x29, 0x07);
 
-      for (uint8_t i = 0; i < 6; i++) {
-        if (Serial) Serial.printf("[%lu]   X3_OEM_COND %u/6\n", millis(), static_cast<unsigned>(i + 1));
+      for (uint8_t i = 0; i < postConditionPasses; i++) {
+        if (Serial) Serial.printf("[%lu]   X3_OEM_COND %u/%u\n", millis(), static_cast<unsigned>(i + 1), static_cast<unsigned>(postConditionPasses));
         sendCommand(0x91);
         sendCommandDataX3(0x90, w, 9);
         sendCommand(0x13);
@@ -941,7 +955,7 @@ void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
 }
 
 void EInkDisplay::refreshDisplay(const RefreshMode mode, const bool turnOffScreen) {
-  if (_x3ReverseExactMode) {
+  if (_x3Mode) {
     displayBuffer(mode, turnOffScreen);
     return;
   }

@@ -60,7 +60,7 @@ class EInkDisplay {
   void refreshDisplay(RefreshMode mode = FAST_REFRESH, bool turnOffScreen = false);
 
   // Hint the X3 policy to run a one-shot full resync on next update.
-  void requestResync();
+  void requestResync(uint8_t settlePasses = 0);
 
   // debug function
   void grayscaleRevert();
@@ -88,10 +88,11 @@ class EInkDisplay {
   uint16_t displayHeight = DISPLAY_HEIGHT;
   uint16_t displayWidthBytes = DISPLAY_WIDTH_BYTES;
   uint32_t bufferSize = BUFFER_SIZE;
-  bool _x3ReverseExactMode = false;
+  bool _x3Mode = false;
   bool _x3PrevFrameValid = false;
   uint8_t _x3InitialFullSyncsRemaining = 0;
   bool _x3ForceFullSyncNext = false;
+  uint8_t _x3ForcedConditionPassesNext = 0;
   uint8_t _x3PrevFrame[MAX_BUFFER_SIZE];
 
   // Frame buffer (statically allocated)
