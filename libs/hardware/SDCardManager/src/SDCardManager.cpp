@@ -1,6 +1,6 @@
 #include "SDCardManager.h"
 
-#include <ExFatLib/ExFatLib.h>
+#include <ExFatLib/ExFatFormatter.h>
 
 namespace {
 constexpr uint8_t SD_CS = 12;
@@ -284,30 +284,42 @@ bool SDCardManager::format(Print* pr) {
     return false;
   }
 
-  Serial.printf("[%lu] [SD] Starting exFAT format...\n", millis());
-  if (pr) pr->println("[SD] Formatting card as exFAT, please wait...");
-
-  // Get the card and sector buffer - sd.end() unmounts and returns a 512-byte buffer
-  uint8_t* secBuf = sd.end();
+  // Log card info for debugging
   SdCard* card = sd.card();
-  if (!secBuf || !card) {
-    if (pr) pr->println("[SD] Failed to get card or buffer");
+  if (!card) {
+    if (pr) pr->println("[SD] Failed to get card");
     return false;
   }
 
-  // Use ExFatFormatter directly (always exFAT, regardless of card size)
+  uint32_t sectors = card->sectorCount();
+  Serial.printf("[%lu] [SD] Card sectors: %lu (%lu MB)\n", millis(), (unsigned long)sectors,
+                (unsigned long)(sectors / 2048));
+
+  Serial.printf("[%lu] [SD] Starting exFAT format...\n", millis());
+  if (pr) pr->println("[SD] Formatting card as exFAT, please wait...");
+
+  // Get the volume memory buffer (512 bytes) and unmount filesystem
+  // This only calls Vol::end(), keeping SPI alive (unlike sd.end())
+  uint8_t* secBuf = sd.vol()->end();
+  if (!secBuf) {
+    if (pr) pr->println("[SD] Failed to get volume buffer");
+    return false;
+  }
+
+  // Use ExFatFormatter directly (always exFAT)
   ExFatFormatter formatter;
   bool success = formatter.format(card, secBuf, pr);
 
   if (success) {
     Serial.printf("[%lu] [SD] Format succeeded, re-initializing...\n", millis());
     if (pr) pr->println("[SD] Format complete, remounting...");
-    // Re-initialize after format to mount the new filesystem
     initialized = false;
     success = begin();
   } else {
     Serial.printf("[%lu] [SD] Format failed\n", millis());
     if (pr) pr->println("[SD] Format failed!");
+    initialized = false;
+    begin();  // Remount the original filesystem
   }
 
   return success;
