@@ -42,7 +42,7 @@ class SDCardManager {
   bool removeDir(const char* path);
 
   /**
-   * Format the SD card as exFAT (always, regardless of card size)
+   * Format the SD card as exFAT
    * @param pr Optional Print destination for progress output (e.g., &Serial)
    * @return true on success, false on failure
    */

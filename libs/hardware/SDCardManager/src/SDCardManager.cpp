@@ -23,9 +23,7 @@ bool SDCardManager::begin() {
   return initialized;
 }
 
-bool SDCardManager::ready() const {
-  return initialized;
-}
+bool SDCardManager::ready() const { return initialized; }
 
 std::vector<String> SDCardManager::listFiles(const char* path, const int maxFiles) {
   std::vector<String> ret;
@@ -114,8 +112,7 @@ bool SDCardManager::readFileToStream(const char* path, Print& out, const size_t 
 }
 
 size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const size_t bufferSize, const size_t maxBytes) {
-  if (!buffer || bufferSize == 0)
-    return 0;
+  if (!buffer || bufferSize == 0) return 0;
   if (!initialized) {
     if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.println("SDCardManager: not initialized; cannot read file");
@@ -185,7 +182,7 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
     FsFile dir = sd.open(path);
     if (dir && dir.isDirectory()) {
       dir.close();
-    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+      if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
       if (Serial) Serial.printf("Directory already exists: %s\n", path);
       return true;
     }
@@ -284,7 +281,6 @@ bool SDCardManager::format(Print* pr) {
     return false;
   }
 
-  // Log card info for debugging
   SdCard* card = sd.card();
   if (!card) {
     if (pr) pr->println("[SD] Failed to get card");
@@ -306,7 +302,6 @@ bool SDCardManager::format(Print* pr) {
     return false;
   }
 
-  // Use ExFatFormatter directly (always exFAT)
   ExFatFormatter formatter;
   bool success = formatter.format(card, secBuf, pr);
 
