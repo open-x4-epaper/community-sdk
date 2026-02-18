@@ -185,7 +185,7 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
     FsFile dir = sd.open(path);
     if (dir && dir.isDirectory()) {
       dir.close();
-      if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
       if (Serial) Serial.printf("Directory already exists: %s\n", path);
       return true;
     }
