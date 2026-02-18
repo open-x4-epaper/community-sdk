@@ -40,12 +40,6 @@ class SDCardManager {
   bool openFileForWrite(const char* moduleName, const std::string& path, FsFile& file);
   bool openFileForWrite(const char* moduleName, const String& path, FsFile& file);
   bool removeDir(const char* path);
-
-  /**
-   * Format the SD card as exFAT
-   * @param pr Optional Print destination for progress output (e.g., &Serial)
-   * @return true on success, false on failure
-   */
   bool format(Print* pr = nullptr);
 
   static SDCardManager& getInstance() { return instance; }
