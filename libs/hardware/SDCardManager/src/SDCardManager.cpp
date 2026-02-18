@@ -23,7 +23,9 @@ bool SDCardManager::begin() {
   return initialized;
 }
 
-bool SDCardManager::ready() const { return initialized; }
+bool SDCardManager::ready() const { 
+  return initialized; 
+}
 
 std::vector<String> SDCardManager::listFiles(const char* path, const int maxFiles) {
   std::vector<String> ret;
@@ -112,7 +114,7 @@ bool SDCardManager::readFileToStream(const char* path, Print& out, const size_t 
 }
 
 size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const size_t bufferSize, const size_t maxBytes) {
-  if (!buffer || bufferSize == 0) 
+  if (!buffer || bufferSize == 0)
     return 0;
   if (!initialized) {
   if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
