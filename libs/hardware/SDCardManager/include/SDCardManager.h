@@ -1,9 +1,7 @@
 #pragma once
 
-
 #include <WString.h>
 #include <vector>
-
 #include <string>
 #include <SdFat.h>
 
