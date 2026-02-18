@@ -23,7 +23,7 @@ bool SDCardManager::begin() {
   return initialized;
 }
 
-bool SDCardManager::ready() const { 
+bool SDCardManager::ready() const {
   return initialized;
 }
 
@@ -40,7 +40,7 @@ std::vector<String> SDCardManager::listFiles(const char* path, const int maxFile
     return ret;
   }
   if (!root.isDirectory()) {
-  if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     root.close();
     return ret;
   }
@@ -86,7 +86,7 @@ String SDCardManager::readFile(const char* path) {
 
 bool SDCardManager::readFileToStream(const char* path, Print& out, const size_t chunkSize) {
   if (!initialized) {
-  if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.println("SDCardManager: not initialized; cannot read file");
     return false;
   }
@@ -117,7 +117,7 @@ size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const siz
   if (!buffer || bufferSize == 0)
     return 0;
   if (!initialized) {
-  if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.println("SDCardManager: not initialized; cannot read file");
     buffer[0] = '\0';
     return 0;
@@ -151,7 +151,7 @@ size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const siz
 
 bool SDCardManager::writeFile(const char* path, const String& content) {
   if (!initialized) {
-      if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.println("SDCardManager: not initialized; cannot write file");
     return false;
   }
@@ -163,7 +163,7 @@ bool SDCardManager::writeFile(const char* path, const String& content) {
 
   FsFile f;
   if (!openFileForWrite("SD", path, f)) {
-      if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.printf("Failed to open file for write: %s\n", path);
     return false;
   }
