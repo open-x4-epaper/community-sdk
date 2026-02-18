@@ -151,7 +151,7 @@ size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const siz
 
 bool SDCardManager::writeFile(const char* path, const String& content) {
   if (!initialized) {
-    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+      if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.println("SDCardManager: not initialized; cannot write file");
     return false;
   }
@@ -163,7 +163,7 @@ bool SDCardManager::writeFile(const char* path, const String& content) {
 
   FsFile f;
   if (!openFileForWrite("SD", path, f)) {
-    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+      if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.printf("Failed to open file for write: %s\n", path);
     return false;
   }
