@@ -24,7 +24,7 @@ bool SDCardManager::begin() {
 }
 
 bool SDCardManager::ready() const { 
-  return initialized; 
+  return initialized;
 }
 
 std::vector<String> SDCardManager::listFiles(const char* path, const int maxFiles) {
@@ -40,7 +40,7 @@ std::vector<String> SDCardManager::listFiles(const char* path, const int maxFile
     return ret;
   }
   if (!root.isDirectory()) {
-    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+  if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     root.close();
     return ret;
   }
@@ -86,7 +86,7 @@ String SDCardManager::readFile(const char* path) {
 
 bool SDCardManager::readFileToStream(const char* path, Print& out, const size_t chunkSize) {
   if (!initialized) {
-    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+  if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.println("SDCardManager: not initialized; cannot read file");
     return false;
   }
