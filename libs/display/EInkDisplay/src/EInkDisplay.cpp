@@ -546,7 +546,7 @@ void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t 
     }
   }
 
-  Serial.printf("[%lu]   Transparent image drawn to frame buffer\n", millis());
+  if (Serial) Serial.printf("[%lu]   Transparent image drawn to frame buffer\n", millis());
 }
 
 void EInkDisplay::writeRamBuffer(uint8_t ramBuffer, const uint8_t* data, uint32_t size) {
