@@ -615,9 +615,9 @@ void EInkDisplay::cleanupGrayscaleBuffers(const uint8_t* bwBuffer) {
 #endif
 
 void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
-  if (!isScreenOn && !turnOffScreen)
+  if (!_x3Mode && !isScreenOn && !turnOffScreen)
   {
-    // Force half refresh if screen is off
+    // Force half refresh if screen is off (non-X3 only)
     mode = HALF_REFRESH;
   }
 
@@ -628,11 +628,9 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
   }
 
   if (_x3Mode) {
-    // X3 wake policy: first redraw after panel-off should be full.
-    if (!isScreenOn) {
-      mode = FULL_REFRESH;
-    }
-
+    // X3 wake policy: firmware maintains _x3PrevFrame for diff computation,
+    // so we can use fast refresh even after power-off. CMD04 will re-power
+    // the charge pump before the next update.
     const bool fastMode = (mode == FAST_REFRESH);
     uint8_t row[128];
     auto sendCommandDataX3 = [&](uint8_t cmd, const uint8_t* data, uint16_t len) {
