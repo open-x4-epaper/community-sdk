@@ -120,7 +120,8 @@ EInkDisplay::EInkDisplay(int8_t sclk, int8_t mosi, int8_t cs, int8_t dc, int8_t 
 #endif
       customLutActive(false) {
   if (Serial) Serial.printf("[%lu] EInkDisplay: Constructor called\n", millis());
-  if (Serial) Serial.printf("[%lu]   SCLK=%d, MOSI=%d, CS=%d, DC=%d, RST=%d, BUSY=%d\n", millis(), sclk, mosi, cs, dc, rst, busy);
+  if (Serial)
+    Serial.printf("[%lu]   SCLK=%d, MOSI=%d, CS=%d, DC=%d, RST=%d, BUSY=%d\n", millis(), sclk, mosi, cs, dc, rst, busy);
 }
 
 void EInkDisplay::begin() {
@@ -249,7 +250,11 @@ void EInkDisplay::initDisplayController() {
   sendCommand(CMD_DRIVER_OUTPUT_CONTROL);
   sendData((HEIGHT - 1) % 256);  // gates A0..A7 (low byte)
   sendData((HEIGHT - 1) / 256);  // gates A8..A9 (high byte)
-  sendData(0x02);                // SM=1 (interlaced), TB=0
+#ifdef FLIPPED
+  sendData(0x03);  // SM=1 (interlaced), TB=1 (hardware vertical flip)
+#else
+  sendData(0x02);  // SM=1 (interlaced), TB=0
+#endif
 
   // Border waveform control
   sendCommand(CMD_BORDER_WAVEFORM);
@@ -297,20 +302,18 @@ void EInkDisplay::setRamArea(const uint16_t x, uint16_t y, uint16_t w, uint16_t 
   // Set RAM X address counter - X is in PIXELS
   sendCommand(CMD_SET_RAM_X_COUNTER);
   sendData(x % 256);  // low byte
-  sendData(x / 256);  // high byte
+  sendData(x >> 8);   // high byte
 
   // Set RAM Y address counter - Y is in PIXELS
   sendCommand(CMD_SET_RAM_Y_COUNTER);
   sendData((y + h - 1) % 256);  // low byte
-  sendData((y + h - 1) / 256);  // high byte
+  sendData((y + h - 1) >> 8);   // high byte
 }
 
-void EInkDisplay::clearScreen(const uint8_t color) const {
-  memset(frameBuffer, color, BUFFER_SIZE);
-}
+void EInkDisplay::clearScreen(const uint8_t color) const { memset(frameBuffer, color, BUFFER_SIZE); }
 
-void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h,
-                            const bool fromProgmem) const {
+void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w,
+                            const uint16_t h, const bool fromProgmem) const {
   if (!frameBuffer) {
     if (Serial) Serial.printf("[%lu]   ERROR: Frame buffer not allocated!\n", millis());
     return;
@@ -322,15 +325,13 @@ void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const ui
   // Copy image data to frame buffer
   for (uint16_t row = 0; row < h; row++) {
     const uint16_t destY = y + row;
-    if (destY >= DISPLAY_HEIGHT)
-      break;
+    if (destY >= DISPLAY_HEIGHT) break;
 
     const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
     const uint16_t srcOffset = row * imageWidthBytes;
 
     for (uint16_t col = 0; col < imageWidthBytes; col++) {
-      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
-        break;
+      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES) break;
 
       if (fromProgmem) {
         frameBuffer[destOffset + col] = pgm_read_byte(&imageData[srcOffset + col]);
@@ -344,8 +345,8 @@ void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const ui
 }
 
 // Draws only black pixels from the image, leaves white pixels clear (unchanged in framebuffer)
-void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h,
-                                     const bool fromProgmem) const {
+void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w,
+                                       const uint16_t h, const bool fromProgmem) const {
   if (!frameBuffer) {
     Serial.printf("[%lu]   ERROR: Frame buffer not allocated!\n", millis());
     return;
@@ -357,15 +358,13 @@ void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t 
   // Copy only black pixels to frame buffer
   for (uint16_t row = 0; row < h; row++) {
     const uint16_t destY = y + row;
-    if (destY >= DISPLAY_HEIGHT)
-      break;
+    if (destY >= DISPLAY_HEIGHT) break;
 
     const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
     const uint16_t srcOffset = row * imageWidthBytes;
 
     for (uint16_t col = 0; col < imageWidthBytes; col++) {
-      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
-        break;
+      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES) break;
 
       uint8_t srcByte = fromProgmem ? pgm_read_byte(&imageData[srcOffset + col]) : imageData[srcOffset + col];
       frameBuffer[destOffset + col] &= srcByte;
@@ -387,9 +386,7 @@ void EInkDisplay::writeRamBuffer(uint8_t ramBuffer, const uint8_t* data, uint32_
   if (Serial) Serial.printf("[%lu]   %s RAM write complete (%lu ms)\n", millis(), bufferName, duration);
 }
 
-void EInkDisplay::setFramebuffer(const uint8_t* bwBuffer) const {
-  memcpy(frameBuffer, bwBuffer, BUFFER_SIZE);
-}
+void EInkDisplay::setFramebuffer(const uint8_t* bwBuffer) const { memcpy(frameBuffer, bwBuffer, BUFFER_SIZE); }
 
 #ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
 void EInkDisplay::swapBuffers() {
@@ -440,9 +437,41 @@ void EInkDisplay::cleanupGrayscaleBuffers(const uint8_t* bwBuffer) {
 }
 #endif
 
+// Reverse the bits of a byte (MSB<->LSB), used for 180-degree framebuffer flip.
+static uint8_t reverseBits(uint8_t b) {
+  b = ((b & 0xF0) >> 4) | ((b & 0x0F) << 4);
+  b = ((b & 0xCC) >> 2) | ((b & 0x33) << 2);
+  b = ((b & 0xAA) >> 1) | ((b & 0x55) << 1);
+  return b;
+}
+
+// Write the framebuffer to display RAM with X flipped (horizontally mirrored):
+// rows are written top-to-bottom normally, but bytes are right-to-left, bits reversed.
+// Used with hardware TB=1 vertical flip to achieve full 180 orientation.
+void EInkDisplay::writeRamBufferXFlipped(uint8_t ramBuffer, const uint8_t* buffer) {
+  const char* bufferName = (ramBuffer == CMD_WRITE_RAM_BW) ? "BW" : "RED";
+  const unsigned long startTime = millis();
+  if (Serial) Serial.printf("[%lu]   Writing X-FLIPPED frame buffer to %s RAM...\n", startTime, bufferName);
+
+  sendCommand(ramBuffer);
+  SPI.beginTransaction(spiSettings);
+  digitalWrite(_dc, HIGH);
+  digitalWrite(_cs, LOW);
+  for (int row = 0; row < DISPLAY_HEIGHT; row++) {
+    const uint8_t* rowPtr = &buffer[row * DISPLAY_WIDTH_BYTES];
+    for (int col = DISPLAY_WIDTH_BYTES - 1; col >= 0; col--) {
+      SPI.transfer(reverseBits(rowPtr[col]));
+    }
+  }
+  digitalWrite(_cs, HIGH);
+  SPI.endTransaction();
+
+  if (Serial)
+    Serial.printf("[%lu]   X-FLIPPED %s RAM write complete (%lu ms)\n", millis(), bufferName, millis() - startTime);
+}
+
 void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
-  if (!isScreenOn && !turnOffScreen)
-  {
+  if (!isScreenOn && !turnOffScreen) {
     // Force half refresh if screen is off
     mode = HALF_REFRESH;
   }
@@ -457,16 +486,29 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
   setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
   if (mode != FAST_REFRESH) {
-    // For full refresh, write to both buffers before refresh
+    // For full/half refresh, write to both BW and RED RAM before refresh
+#ifdef FLIPPED
+    writeRamBufferXFlipped(CMD_WRITE_RAM_BW, frameBuffer);
+    writeRamBufferXFlipped(CMD_WRITE_RAM_RED, frameBuffer);
+#else
     writeRamBuffer(CMD_WRITE_RAM_BW, frameBuffer, BUFFER_SIZE);
     writeRamBuffer(CMD_WRITE_RAM_RED, frameBuffer, BUFFER_SIZE);
+#endif
   } else {
     // For fast refresh, write to BW buffer only
+#ifdef FLIPPED
+    writeRamBufferXFlipped(CMD_WRITE_RAM_BW, frameBuffer);
+#else
     writeRamBuffer(CMD_WRITE_RAM_BW, frameBuffer, BUFFER_SIZE);
+#endif
     // In single buffer mode, the RED RAM should already contain the previous frame
     // In dual buffer mode, we write back frameBufferActive which is the last frame
 #ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
+#ifdef FLIPPED
+    writeRamBufferXFlipped(CMD_WRITE_RAM_RED, frameBufferActive);
+#else
     writeRamBuffer(CMD_WRITE_RAM_RED, frameBufferActive, BUFFER_SIZE);
+#endif
 #endif
   }
 
@@ -479,9 +521,12 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
 
 #ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
   // In single buffer mode always sync RED RAM after refresh to prepare for next fast refresh
-  // This ensures RED contains the currently displayed frame for differential comparison
   setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+#ifdef FLIPPED
+  writeRamBufferXFlipped(CMD_WRITE_RAM_RED, frameBuffer);
+#else
   writeRamBuffer(CMD_WRITE_RAM_RED, frameBuffer, BUFFER_SIZE);
+#endif
 #endif
 }
 
@@ -518,7 +563,8 @@ void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
   const uint16_t windowWidthBytes = w / 8;
   const uint32_t windowBufferSize = windowWidthBytes * h;
 
-  if (Serial) Serial.printf("[%lu]   Window buffer size: %lu bytes (%d x %d pixels)\n", millis(), windowBufferSize, w, h);
+  if (Serial)
+    Serial.printf("[%lu]   Window buffer size: %lu bytes (%d x %d pixels)\n", millis(), windowBufferSize, w, h);
 
   // Allocate temporary buffer on stack
   std::vector<uint8_t> windowBuffer(windowBufferSize);
@@ -606,12 +652,28 @@ void EInkDisplay::refreshDisplay(const RefreshMode mode, const bool turnOffScree
   if (mode == FULL_REFRESH) {
     displayMode |= 0x34;
   } else if (mode == HALF_REFRESH) {
-    // Write high temp to the register for a faster refresh
-    sendCommand(CMD_WRITE_TEMP);
-    sendData(0x5A);
-    displayMode |= 0xD4;
+    // #ifdef FLIPPED
+    // The FL wrapper's OTP waveform doesn't work well with the temp trick.
+    // Use the standard full-refresh waveform (0x34) for half-refresh,
+    // which still skips some initialization if the screen is already on.
+    displayMode |= 0x34;
+    // #else
+    //     // Write high temp to the register for a faster refresh
+    //     sendCommand(CMD_WRITE_TEMP);
+    //     sendData(0x5A);
+    //     displayMode |= 0xD4;
+    // #endif
   } else {  // FAST_REFRESH
-    displayMode |= customLutActive ? 0x0C : 0x1C;
+            // #ifdef FLIPPED
+    // The default OTP fast refresh waveform on the FL panel is too weak at room temperature,
+    // leaving massive ghosting. Force 0°C to invoke a much stronger/longer partial update waveform.
+    sendCommand(CMD_WRITE_TEMP);
+    // sendData(0x00);
+    sendData(0x19);                                // ~25°C
+    displayMode |= customLutActive ? 0x2C : 0x3C;  // Adds TEMP_LOAD bit (0x20) to 0x0C/0x1C
+                                                   // #else
+                                                   //     displayMode |= customLutActive ? 0x0C : 0x1C;
+                                                   // #endif
   }
 
   // Power on and refresh display

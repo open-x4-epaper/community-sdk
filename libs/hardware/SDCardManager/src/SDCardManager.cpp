@@ -1,17 +1,23 @@
 #include "SDCardManager.h"
 
+#include <FsCompat.h>
+
 namespace {
-constexpr uint8_t SD_CS = 12;
-constexpr uint32_t SPI_FQ = 40000000;
+// constexpr uint8_t SD_CS = 12; // Unused in SD_MMC
+// constexpr uint32_t SPI_FQ = 40000000; // Unused
 }
 
 SDCardManager SDCardManager::instance;
 
-SDCardManager::SDCardManager() : sd() {}
+SDCardManager::SDCardManager() {}  // Removing sd() init
 
 bool SDCardManager::begin() {
-  if (!sd.begin(SD_CS, SPI_FQ)) {
-    if (Serial) Serial.printf("[%lu] [SD] SD card not detected\n", millis());
+  // CLK 39, CMD 40, D0 38, D1 48, D2 42, D3 41
+  SD_MMC.setPins(39, 40, 38, 48, 42, 41);
+  if (!SD_MMC.begin("/sdcard",
+                    false)) {  // false = 4-bit mode capability check (but actually second
+                               // arg is mode1bit. false means try 4bit)
+    if (Serial) Serial.printf("[%lu] [SD] SD card not detected or init failed\n", millis());
     initialized = false;
   } else {
     if (Serial) Serial.printf("[%lu] [SD] SD card detected\n", millis());
@@ -21,9 +27,7 @@ bool SDCardManager::begin() {
   return initialized;
 }
 
-bool SDCardManager::ready() const {
-  return initialized;
-}
+bool SDCardManager::ready() const { return initialized; }
 
 std::vector<String> SDCardManager::listFiles(const char* path, const int maxFiles) {
   std::vector<String> ret;
@@ -32,7 +36,7 @@ std::vector<String> SDCardManager::listFiles(const char* path, const int maxFile
     return ret;
   }
 
-  auto root = sd.open(path);
+  File root = SD_MMC.open(path);
   if (!root) {
     if (Serial) Serial.printf("[%lu] [SD] Failed to open directory\n", millis());
     return ret;
@@ -44,15 +48,18 @@ std::vector<String> SDCardManager::listFiles(const char* path, const int maxFile
   }
 
   int count = 0;
-  char name[128];
-  for (auto f = root.openNextFile(); f && count < maxFiles; f = root.openNextFile()) {
+  File f = root.openNextFile();
+  while (f && count < maxFiles) {
     if (f.isDirectory()) {
-      f.close();
+      f = root.openNextFile();
       continue;
     }
-    f.getName(name, sizeof(name));
-    ret.emplace_back(name);
-    f.close();
+    const char* n = f.name();
+    // Strip leading path if present to match SdFat behavior of getName
+    const char* name = strrchr(n, '/');
+    ret.emplace_back(name ? name + 1 : n);
+
+    f = root.openNextFile();
     count++;
   }
   root.close();
@@ -112,8 +119,7 @@ bool SDCardManager::readFileToStream(const char* path, Print& out, const size_t 
 }
 
 size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const size_t bufferSize, const size_t maxBytes) {
-  if (!buffer || bufferSize == 0)
-    return 0;
+  if (!buffer || bufferSize == 0) return 0;
   if (!initialized) {
     if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.println("SDCardManager: not initialized; cannot read file");
@@ -134,7 +140,7 @@ size_t SDCardManager::readFileToBuffer(const char* path, char* buffer, const siz
     constexpr size_t chunk = 64;
     const size_t want = maxToRead - total;
     const size_t readLen = (want < chunk) ? want : chunk;
-    const int r = f.read(buffer + total, readLen);
+    const int r = f.read(reinterpret_cast<uint8_t*>(buffer) + total, readLen);
     if (r > 0) {
       total += static_cast<size_t>(r);
     } else {
@@ -154,9 +160,10 @@ bool SDCardManager::writeFile(const char* path, const String& content) {
     return false;
   }
 
-  // Remove existing file so we perform an overwrite rather than append
-  if (sd.exists(path)) {
-    sd.remove(path);
+  // NOTE: SD_MMC / FS open with "w" (FILE_WRITE) truncates by default, so
+  // explicit remove is not strictly needed but good for safety.
+  if (SD_MMC.exists(path)) {
+    SD_MMC.remove(path);
   }
 
   FsFile f;
@@ -179,11 +186,11 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
   }
 
   // Check if directory already exists
-  if (sd.exists(path)) {
-    FsFile dir = sd.open(path);
+  if (SD_MMC.exists(path)) {
+    File dir = SD_MMC.open(path);
     if (dir && dir.isDirectory()) {
       dir.close();
-    if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
+      if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
       if (Serial) Serial.printf("Directory already exists: %s\n", path);
       return true;
     }
@@ -191,7 +198,7 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
   }
 
   // Create the directory
-  if (sd.mkdir(path)) {
+  if (SD_MMC.mkdir(path)) {
     if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.printf("Created directory: %s\n", path);
     return true;
@@ -203,12 +210,12 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
 }
 
 bool SDCardManager::openFileForRead(const char* moduleName, const char* path, FsFile& file) {
-  if (!sd.exists(path)) {
+  if (!SD_MMC.exists(path)) {
     if (Serial) Serial.printf("[%lu] [%s] File does not exist: %s\n", millis(), moduleName, path);
     return false;
   }
 
-  file = sd.open(path, O_RDONLY);
+  file = FsFile(SD_MMC.open(path, FILE_READ));
   if (!file) {
     if (Serial) Serial.printf("[%lu] [%s] Failed to open file for reading: %s\n", millis(), moduleName, path);
     return false;
@@ -225,7 +232,7 @@ bool SDCardManager::openFileForRead(const char* moduleName, const String& path, 
 }
 
 bool SDCardManager::openFileForWrite(const char* moduleName, const char* path, FsFile& file) {
-  file = sd.open(path, O_RDWR | O_CREAT | O_TRUNC);
+  file = FsFile(SD_MMC.open(path, FILE_WRITE));
   if (!file) {
     if (Serial) Serial.printf("[%lu] [%s] Failed to open file for writing: %s\n", millis(), moduleName, path);
     return false;
@@ -243,7 +250,7 @@ bool SDCardManager::openFileForWrite(const char* moduleName, const String& path,
 
 bool SDCardManager::removeDir(const char* path) {
   // 1. Open the directory
-  auto dir = sd.open(path);
+  File dir = SD_MMC.open(path);
   if (!dir) {
     return false;
   }
@@ -251,27 +258,34 @@ bool SDCardManager::removeDir(const char* path) {
     return false;
   }
 
-  auto file = dir.openNextFile();
+  File file = dir.openNextFile();
   char name[128];
   while (file) {
     String filePath = path;
     if (!filePath.endsWith("/")) {
       filePath += "/";
     }
-    file.getName(name, sizeof(name));
-    filePath += name;
+    const char* n = file.name();
+    const char* leafName = strrchr(n, '/');
+    filePath += (leafName ? leafName + 1 : n);
 
+    // Check if it's a directory? file.isDirectory().
+    // Recursion needed.
     if (file.isDirectory()) {
+      file.close();  // Close before recursing usually good
       if (!removeDir(filePath.c_str())) {
         return false;
       }
     } else {
-      if (!sd.remove(filePath.c_str())) {
+      file.close();
+      if (!SD_MMC.remove(filePath.c_str())) {
         return false;
       }
     }
     file = dir.openNextFile();
   }
 
-  return sd.rmdir(path);
+  // Close dir before removing?
+  dir.close();
+  return SD_MMC.rmdir(path);
 }

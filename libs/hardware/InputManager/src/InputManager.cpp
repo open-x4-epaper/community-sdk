@@ -10,13 +10,28 @@
 // BACK CONF LEFT RGHT   UP DOWN
 // 3512 2694 1493    5 2242    5
 
-// Setup ranges, if ADC value is between value `i` and `i + 1`, button `i` is being pressed
-// These ranges are based on real world values above, and are much more tolerant of different
-// devices than a fixed threshold check
-// These values are calculated by taking the midpoint of the pairs of averaged values above
-const int InputManager::ADC_RANGES_1[] = {ADC_NO_BUTTON, 3100, 2090, 750, INT32_MIN};
-const int InputManager::ADC_RANGES_2[] = {ADC_NO_BUTTON, 1120, INT32_MIN};
-const char* InputManager::BUTTON_NAMES[] = {"Back", "Confirm", "Left", "Right", "Up", "Down", "Power"};
+// Setup ranges, if ADC value is between value `i` and `i + 1`, button `i` is
+// being pressed These ranges are based on real world values above, and are much
+// more tolerant of different devices than a fixed threshold check These values
+// are calculated by taking the midpoint of the pairs of averaged values above
+// Maps
+// Format: {ButtonID, MinADC, MaxADC}
+// ADC1 (Pin 1) - Note: Left value is estimated >3400
+const InputManager::ButtonMap InputManager::MAP_1[] = {{InputManager::BTN_RIGHT, 0, 500},
+                                                       {InputManager::BTN_BACK, 3200, 3600},
+                                                       {InputManager::BTN_CONFIRM, 2300, 2700},
+                                                       {InputManager::BTN_LEFT, 800, 1500}};
+
+// ADC2 (Pin 2)
+// Up=0, Down=2117, Unk1=3015, Unk2=3535
+// IDs relative to second bank (0=Up, 1=Down, 2=Unk1, 3=Unk2)
+const InputManager::ButtonMap InputManager::MAP_2[] = {{0, 0, 500},       // Up
+                                                       {1, 1900, 2300},   // Down
+                                                       {2, 2800, 3200},   // Unknown1
+                                                       {3, 3300, 3700}};  // Unknown2
+
+const char* InputManager::BUTTON_NAMES[] = {"Back",    "Confirm", "Left",    "Right", "Up(1)",
+                                            "Down(1)", "Up(2)",   "Down(2)", "Power"};
 
 InputManager::InputManager()
     : currentState(0),
@@ -30,39 +45,40 @@ InputManager::InputManager()
 void InputManager::begin() {
   pinMode(BUTTON_ADC_PIN_1, INPUT);
   pinMode(BUTTON_ADC_PIN_2, INPUT);
-  pinMode(POWER_BUTTON_PIN, INPUT_PULLUP);
+  // Power button active high
+  pinMode(POWER_BUTTON_PIN, INPUT_PULLDOWN);
   analogSetAttenuation(ADC_11db);
 }
 
-int InputManager::getButtonFromADC(const int adcValue, const int ranges[], const int numButtons) {
+int InputManager::getButtonFromMap(const int adcValue, const ButtonMap* map, const int numButtons) {
   for (int i = 0; i < numButtons; i++) {
-    if (ranges[i + 1] < adcValue && adcValue <= ranges[i]) {
-      return i;
+    if (adcValue >= map[i].min && adcValue <= map[i].max) {
+      return map[i].id;
     }
   }
 
   return -1;
 }
 
-uint8_t InputManager::getState() {
-  uint8_t state = 0;
+uint16_t InputManager::getState() {
+  uint16_t state = 0;
 
   // Read GPIO1 buttons
   const int adcValue1 = analogRead(BUTTON_ADC_PIN_1);
-  const int button1 = getButtonFromADC(adcValue1, ADC_RANGES_1, NUM_BUTTONS_1);
+  const int button1 = getButtonFromMap(adcValue1, MAP_1, NUM_BUTTONS_1);
   if (button1 >= 0) {
     state |= (1 << button1);
   }
 
   // Read GPIO2 buttons
   const int adcValue2 = analogRead(BUTTON_ADC_PIN_2);
-  const int button2 = getButtonFromADC(adcValue2, ADC_RANGES_2, NUM_BUTTONS_2);
+  const int button2 = getButtonFromMap(adcValue2, MAP_2, NUM_BUTTONS_2);
   if (button2 >= 0) {
     state |= (1 << (button2 + 4));
   }
 
-  // Read power button (digital, active LOW)
-  if (digitalRead(POWER_BUTTON_PIN) == LOW) {
+  // Read power button (digital, active HIGH)
+  if (digitalRead(POWER_BUTTON_PIN) == HIGH) {
     state |= (1 << BTN_POWER);
   }
 
@@ -71,7 +87,7 @@ uint8_t InputManager::getState() {
 
 void InputManager::update() {
   const unsigned long currentTime = millis();
-  const uint8_t state = getState();
+  const uint16_t state = getState();
 
   // Always clear events first
   pressedEvents = 0;
@@ -94,7 +110,8 @@ void InputManager::update() {
         buttonPressStart = currentTime;
       }
 
-      // If releasing a button and no other buttons being pressed, record finish time
+      // If releasing a button and no other buttons being pressed, record finish
+      // time
       if (releasedEvents > 0 && state == 0) {
         buttonPressFinish = currentTime;
       }
@@ -104,25 +121,15 @@ void InputManager::update() {
   }
 }
 
-bool InputManager::isPressed(const uint8_t buttonIndex) const {
-  return currentState & (1 << buttonIndex);
-}
+bool InputManager::isPressed(const uint8_t buttonIndex) const { return currentState & (1 << buttonIndex); }
 
-bool InputManager::wasPressed(const uint8_t buttonIndex) const {
-  return pressedEvents & (1 << buttonIndex);
-}
+bool InputManager::wasPressed(const uint8_t buttonIndex) const { return pressedEvents & (1 << buttonIndex); }
 
-bool InputManager::wasAnyPressed() const {
-  return pressedEvents > 0;
-}
+bool InputManager::wasAnyPressed() const { return pressedEvents > 0; }
 
-bool InputManager::wasReleased(const uint8_t buttonIndex) const {
-  return releasedEvents & (1 << buttonIndex);
-}
+bool InputManager::wasReleased(const uint8_t buttonIndex) const { return releasedEvents & (1 << buttonIndex); }
 
-bool InputManager::wasAnyReleased() const {
-  return releasedEvents > 0;
-}
+bool InputManager::wasAnyReleased() const { return releasedEvents > 0; }
 
 unsigned long InputManager::getHeldTime() const {
   // Still hold a button
@@ -140,6 +147,4 @@ const char* InputManager::getButtonName(const uint8_t buttonIndex) {
   return "Unknown";
 }
 
-bool InputManager::isPowerButtonPressed() const {
-  return isPressed(BTN_POWER);
-}
+bool InputManager::isPowerButtonPressed() const { return isPressed(BTN_POWER); }
