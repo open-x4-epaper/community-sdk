@@ -1,6 +1,5 @@
 #include "BatteryMonitor.h"
-#include <esp32-hal-adc.h>
-#include <esp_adc_cal.h>
+#include <Arduino.h>
 
 inline float min(const float a, const float b) { return a < b ? a : b; }
 inline float max(const float a, const float b) { return a > b ? a : b; }
@@ -18,14 +17,12 @@ uint16_t BatteryMonitor::readPercentage() const
 uint16_t BatteryMonitor::readMillivolts() const
 {
     const uint16_t raw = readRawMillivolts();
-    const uint32_t mv = millivoltsFromRawAdc(raw);
-    return static_cast<uint32_t>(mv * _dividerMultiplier);
+    return static_cast<uint16_t>(raw * _dividerMultiplier);
 }
 
 uint16_t BatteryMonitor::readRawMillivolts() const
 {
-    const uint16_t raw = analogRead(_adcPin);
-    return raw;
+    return analogReadMilliVolts(_adcPin);
 }
 
 double BatteryMonitor::readVolts() const
@@ -51,7 +48,8 @@ uint16_t BatteryMonitor::percentageFromMillivolts(uint16_t millivolts)
 
 uint16_t BatteryMonitor::millivoltsFromRawAdc(uint16_t adc_raw)
 {
-    esp_adc_cal_characteristics_t adc_chars;
-    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_12, ADC_WIDTH_BIT_12, 1100, &adc_chars);
-    return esp_adc_cal_raw_to_voltage(adc_raw, &adc_chars);
+    (void)adc_raw;
+    // In Arduino Core 3.x, use analogReadMilliVolts() directly instead
+    // of manual ADC calibration. This function is kept for API compatibility.
+    return 0;
 }
