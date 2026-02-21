@@ -27,5 +27,17 @@
     }
   ],
   "platforms": "espressif32",
-  "frameworks": ["arduino", "espidf"]
+  "frameworks": ["arduino", "espidf"],
+  "export": {
+    "exclude": [
+      ".github",
+      "libs",
+      "tools"
+    ],
+    "include": [
+      "library.json",
+      "LICENSE",
+      "README.md"
+    ]
+  }
 }
