@@ -965,6 +965,14 @@ void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
 
 void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
   if (_x3Mode) {
+    if (Serial) Serial.printf("[%lu]   X3_GRAY_SKIP(temp-disabled)\n", millis());
+    drawGrayscale = false;
+    inGrayscaleMode = false;
+    _x3GrayState.lsbValid = false;
+    _x3ForcedConditionPassesNext = 0;
+    isScreenOn = !turnOffScreen;
+    return;
+
     // X3 AA pipeline: LSB->0x10 + MSB->0x13, trigger 0x12 with X3 LUT banks,
     // then optionally run settle triggers on large partial deltas.
     drawGrayscale = false;
@@ -1015,9 +1023,9 @@ void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
     const uint8_t* bw = lut_x3_bw_full;
     const uint8_t* wb = lut_x3_wb_full;
     const uint8_t* bb = lut_x3_bb_full;
-    uint8_t dataInterval0 = 0x29;
+    uint8_t dataInterval0 = 0xA9;
     uint8_t dataInterval1 = 0x07;
-    if (Serial) Serial.printf("[%lu]   X3_GRAY_MODE=full29\n", millis());
+    if (Serial) Serial.printf("[%lu]   X3_GRAY_MODE=fullA9\n", millis());
     sendCommandDataX3(0x20, vcom, 42);
     sendCommandDataX3(0x21, ww, 42);
     sendCommandDataX3(0x22, bw, 42);
