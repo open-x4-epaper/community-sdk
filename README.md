@@ -1,7 +1,6 @@
 # OpenX4 E-Paper Community SDK
 
-A **community-maintained SDK** for building firmware and tools for the **Xteink X4** device.
-Libraries are automatically packaged and released via GitHub Actions — no Git submodules required.
+A **community-maintained SDK** for building firmware and tools for the **Xteink X4** device, providing a shared set of libraries, utilities, and development workflows that make working with the X4 simple and consistent.
 
 ## ✨ **What is this?**
 
@@ -17,7 +16,7 @@ The SDK is intentionally modular - bring it into your project and use only what 
 ## 📁 Repository Structure
 
 ```
-x4-epaper-sdk/
+community-sdk/
 ├── libs/           # Reusable components for X4 firmware
 │   ├── display/       # E-paper helpers & drivers
 │   ├── graphics/      # Drawing, fonts, UI utilities
@@ -51,8 +50,8 @@ PlatformIO will automatically install all individual libraries
 Then include the libraries in your project as usual:
 
 ```cpp
-#include <EInkDisplay.h>
 #include <BatteryMonitor.h>
+#include <EpdScreenController.h>
 ```
 
 ### Pinning to a specific version
