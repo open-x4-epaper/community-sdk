@@ -1,8 +1,6 @@
 # OpenX4 E-Paper Community SDK
 
-A **community-maintained SDK** for building firmware and tools for the **Xteink X4** device. 
-This repository is designed to be included as a **Git submodule** inside PlatformIO projects, providing a shared set of 
-libraries, utilities, and development workflows that make working with the X4 simple and consistent.
+A **community-maintained SDK** for building firmware and tools for the **Xteink X4** device, providing a shared set of libraries, utilities, and development workflows that make working with the X4 simple and consistent.
 
 ## ✨ **What is this?**
 
@@ -36,28 +34,44 @@ Libs should be categorized under `libs/` based on functionality, and then contai
 
 ## 📦 Adding to Your PlatformIO Project
 
-Add this repository as a submodule:
+> The SDK and all its libraries are published as ZIP archives on every [GitHub Release](https://github.com/open-x4-epaper/community-sdk/releases).
+> PlatformIO downloads and installs them automatically.
 
-```bash
-git submodule add https://github.com/open-x4-epaper/community-sdk.git open-x4-sdk
-```
-
-Then add each lib you need into your `platformio.ini` file as `lib_deps`:
+Add the SDK to your `platformio.ini`:
 
 ```ini
 lib_deps =
-  BatteryMonitor=symlink://open-x4-sdk/libs/hardware/BatteryMonitor
-  EpdScreenController=symlink://open-x4-sdk/libs/display/EpdScreenController
+  https://github.com/open-x4-epaper/community-sdk/releases/latest/download/open-x4-sdk.zip
 ```
 
-Then you can include the libraries in your project as usual:
+PlatformIO will automatically install all individual libraries
+(`EInkDisplay`, `InputManager`, `BatteryMonitor`, `SDCardManager`, etc.) from the latest release.
+
+Then include the libraries in your project as usual:
 
 ```cpp
 #include <BatteryMonitor.h>
 #include <EpdScreenController.h>
-`````
+```
 
-Or load tools from the `tools/` directory as needed.
+### Pinning to a specific version
+
+To use a specific release instead of always the latest, reference the versioned `open-x4-sdk.zip` directly:
+
+```ini
+lib_deps =
+  https://github.com/open-x4-epaper/community-sdk/releases/download/v1.0.0/open-x4-sdk.zip
+```
+
+## 🔄 How Releases Work
+
+On every tag push (e.g. `v1.2.0`), a GitHub Action automatically:
+
+1. Scans `libs/display/` and `libs/hardware/` for directories containing a `library.json`
+2. Packages each library into its own ZIP (e.g. `EInkDisplay.zip`)
+3. Generates a versioned root `library.json` with exact download URLs for that release
+4. Packages the root `library.json` as `open-x4-sdk.zip`
+5. Publishes all ZIPs as assets on the GitHub Release
 
 ## 🤝 Contributing
 
@@ -75,7 +89,7 @@ Ways you can help:
 
 1. Keep modules self-contained
 2. Prefer zero-dependency solutions where practical
-3. Document your additions
+3. Document your additions (including a `library.json`)
 4. Use clear naming and consistent structure
 5. Be friendly and constructive in PR conversations
 
@@ -83,7 +97,7 @@ A full contributing guide will be added as the project grows.
 
 ## 📝 License
 
-This SDK is released under an open-source MIT license. To keep things simple, all contributions and code must also 
+This SDK is released under an open-source MIT license. To keep things simple, all contributions and code must also
 fall under this license.
 
 ## 💬 Community
