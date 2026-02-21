@@ -34,7 +34,7 @@ Libs should be categorized under `libs/` based on functionality, and then contai
 
 ## 📦 Adding to Your PlatformIO Project
 
-> **No Git submodules needed.** The SDK and all its libraries are published as ZIP archives on every [GitHub Release](https://github.com/open-x4-epaper/community-sdk/releases).
+> The SDK and all its libraries are published as ZIP archives on every [GitHub Release](https://github.com/open-x4-epaper/community-sdk/releases).
 > PlatformIO downloads and installs them automatically.
 
 Add the SDK to your `platformio.ini`:
