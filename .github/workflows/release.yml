@@ -1,0 +1,53 @@
+name: Release Libraries
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create library ZIPs and generate library.json
+        run: |
+          TAG="${{ github.ref_name }}"
+          REPO="https://github.com/${{ github.repository }}"
+          DEPS="[]"
+
+          for DIR in libs/display libs/hardware; do
+            if [ -d "$DIR" ]; then
+              for LIB_DIR in "$DIR"/*/; do
+                if [ -f "${LIB_DIR}library.json" ]; then
+                  LIB_NAME=$(basename "$LIB_DIR")
+                  ZIP_NAME="${LIB_NAME}.zip"
+                  zip -r "$ZIP_NAME" "$LIB_DIR"
+                  echo "Packed: $ZIP_NAME"
+                  DEPS=$(echo "$DEPS" | jq \
+                    --arg name "$LIB_NAME" \
+                    --arg url "$REPO/releases/download/$TAG/$ZIP_NAME" \
+                    '. += [{"name": $name, "version": $url}]')
+                fi
+              done
+            fi
+          done
+
+          # Generate versioned root library.json
+          jq --argjson deps "$DEPS" '.dependencies = $deps' library.json > library_release.json
+          mv library_release.json library.json
+
+          # Package root library.json as open-x4-sdk.zip
+          zip open-x4-sdk.zip library.json
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+          files: "*.zip"
