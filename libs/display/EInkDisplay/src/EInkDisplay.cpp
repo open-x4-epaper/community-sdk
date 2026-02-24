@@ -107,6 +107,90 @@ const unsigned char lut_grayscale_revert[] PROGMEM = {
     // Reserved
     0x00, 0x00};
 
+// X3 reverse-exact full refresh LUTs (42 bytes each)
+const uint8_t lut_x3_vcom_full[] PROGMEM = {
+    0x00, 0x06, 0x02, 0x06, 0x06, 0x01, 0x00, 0x05, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_ww_full[] PROGMEM = {
+    0x20, 0x06, 0x02, 0x06, 0x06, 0x01, 0x00, 0x05, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_bw_full[] PROGMEM = {
+    0xAA, 0x06, 0x02, 0x06, 0x06, 0x01, 0x80, 0x05, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_wb_full[] PROGMEM = {
+    0x55, 0x06, 0x02, 0x06, 0x06, 0x01, 0x40, 0x05, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_bb_full[] PROGMEM = {
+    0x00, 0x06, 0x02, 0x06, 0x06, 0x01, 0x00, 0x05, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+// X3 stock image-write LUTs
+const uint8_t lut_x3_vcom_img[] PROGMEM = {
+    0x00, 0x08, 0x0B, 0x02, 0x03, 0x01, 0x00, 0x0C, 0x02, 0x07, 0x02, 0x01, 0x00, 0x01,
+    0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_ww_img[] PROGMEM = {
+    0xA8, 0x08, 0x0B, 0x02, 0x03, 0x01, 0x44, 0x0C, 0x02, 0x07, 0x02, 0x01, 0x04, 0x01,
+    0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_bw_img[] PROGMEM = {
+    0x80, 0x08, 0x0B, 0x02, 0x03, 0x01, 0x62, 0x0C, 0x02, 0x07, 0x02, 0x01, 0x00, 0x01,
+    0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_wb_img[] PROGMEM = {
+    0x88, 0x08, 0x0B, 0x02, 0x03, 0x01, 0x60, 0x0C, 0x02, 0x07, 0x02, 0x01, 0x00, 0x01,
+    0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_bb_img[] PROGMEM = {
+    0x00, 0x08, 0x0B, 0x02, 0x03, 0x01, 0x4A, 0x0C, 0x02, 0x07, 0x02, 0x01, 0x88, 0x01,
+    0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+// X3 AA LUTs: fast partial-style set tuned to preserve X3 polarity behavior.
+const uint8_t lut_x3_vcom_fast[] PROGMEM = {
+    0x00, 0x18, 0x18, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_ww_fast[] PROGMEM = {
+    0x60, 0x18, 0x18, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_bw_fast[] PROGMEM = {
+    0x20, 0x18, 0x18, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_wb_fast[] PROGMEM = {
+    0x10, 0x18, 0x18, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+const uint8_t lut_x3_bb_fast[] PROGMEM = {
+    0x90, 0x18, 0x18, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+void EInkDisplay::setDisplayDimensions(uint16_t width, uint16_t height) {
+  displayWidth = width;
+  displayHeight = height;
+  displayWidthBytes = width / 8;
+  bufferSize = displayWidthBytes * height;
+  _x3Mode = false;
+}
+
+void EInkDisplay::setDisplayX3() {
+  setDisplayDimensions(X3_DISPLAY_WIDTH, X3_DISPLAY_HEIGHT);
+  _x3Mode = true;
+}
+
+void EInkDisplay::requestResync(uint8_t settlePasses) {
+  _x3ForceFullSyncNext = _x3Mode;
+  _x3ForcedConditionPassesNext = _x3Mode ? settlePasses : 0;
+}
+
 EInkDisplay::EInkDisplay(int8_t sclk, int8_t mosi, int8_t cs, int8_t dc, int8_t rst, int8_t busy)
     : _sclk(sclk),
       _mosi(mosi),
@@ -132,20 +216,26 @@ void EInkDisplay::begin() {
 #endif
 
   // Initialize to white
-  memset(frameBuffer0, 0xFF, BUFFER_SIZE);
+  memset(frameBuffer0, 0xFF, bufferSize);
+  _x3RedRamSynced = false;
+  _x3InitialFullSyncsRemaining = _x3Mode ? 2 : 0;
+  _x3ForceFullSyncNext = false;
+  _x3ForcedConditionPassesNext = 0;
+  _x3GrayState = {};
 #ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
-  if (Serial) Serial.printf("[%lu]   Static frame buffer (%lu bytes = 48KB)\n", millis(), BUFFER_SIZE);
+  if (Serial) Serial.printf("[%lu]   Static frame buffer (%lu bytes)\n", millis(), bufferSize);
 #else
-  memset(frameBuffer1, 0xFF, BUFFER_SIZE);
-  if (Serial) Serial.printf("[%lu]   Static frame buffers (2 x %lu bytes = 96KB)\n", millis(), BUFFER_SIZE);
+  memset(frameBuffer1, 0xFF, bufferSize);
+  if (Serial) Serial.printf("[%lu]   Static frame buffers (2 x %lu bytes)\n", millis(), bufferSize);
 #endif
 
   if (Serial) Serial.printf("[%lu]   Initializing e-ink display driver...\n", millis());
 
   // Initialize SPI with custom pins
   SPI.begin(_sclk, -1, _mosi, _cs);
-  spiSettings = SPISettings(40000000, MSBFIRST, SPI_MODE0);  // MODE0 is standard for SSD1677
-  if (Serial) Serial.printf("[%lu]   SPI initialized at 40 MHz, Mode 0\n", millis());
+  const uint32_t spiHz = _x3Mode ? 10000000 : 40000000;
+  spiSettings = SPISettings(spiHz, MSBFIRST, SPI_MODE0);
+  if (Serial) Serial.printf("[%lu]   SPI initialized at %lu Hz, Mode 0\n", millis(), spiHz);
 
   // Setup GPIO pins
   pinMode(_cs, OUTPUT);
@@ -180,6 +270,35 @@ void EInkDisplay::resetDisplay() {
   digitalWrite(_rst, HIGH);
   delay(20);
   if (Serial) Serial.printf("[%lu]   Display reset complete\n", millis());
+  if (_x3Mode) {
+    delay(50);
+    return;
+  }
+}
+
+void EInkDisplay::waitForRefresh(const char* comment) {
+  unsigned long start = millis();
+  if (!_x3Mode) {
+    while (digitalRead(_busy) == HIGH) {
+      delay(1);
+      if (millis() - start > 30000) break;
+    }
+  } else {
+    bool sawLow = false;
+    while (digitalRead(_busy) == HIGH) {
+      delay(1);
+      if (millis() - start > 1000) break;
+    }
+    if (digitalRead(_busy) == LOW) {
+      sawLow = true;
+      while (digitalRead(_busy) == LOW) {
+        delay(1);
+        if (millis() - start > 30000) break;
+      }
+    }
+    if (!sawLow) return;
+  }
+  if (comment && Serial) Serial.printf("[%lu]   Refresh done: %s (%lu ms)\n", millis(), comment, millis() - start);
 }
 
 void EInkDisplay::sendCommand(uint8_t command) {
@@ -211,12 +330,25 @@ void EInkDisplay::sendData(const uint8_t* data, uint16_t length) {
 
 void EInkDisplay::waitWhileBusy(const char* comment) {
   unsigned long start = millis();
-  while (digitalRead(_busy) == HIGH) {
-    delay(1);
-    if (millis() - start > 10000) {
-      if (Serial) Serial.printf("[%lu]   Timeout waiting for busy%s\n", millis(), comment ? comment : "");
-      break;
+  if (!_x3Mode) {
+    while (digitalRead(_busy) == HIGH) {
+      delay(1);
+      if (millis() - start > 30000) break;
     }
+  } else {
+    bool sawLow = false;
+    while (digitalRead(_busy) == HIGH) {
+      delay(1);
+      if (millis() - start > 1000) break;
+    }
+    if (digitalRead(_busy) == LOW) {
+      sawLow = true;
+      while (digitalRead(_busy) == LOW) {
+        delay(1);
+        if (millis() - start > 30000) break;
+      }
+    }
+    if (!sawLow) return;
   }
   if (comment) {
     if (Serial) Serial.printf("[%lu]   Wait complete: %s (%lu ms)\n", millis(), comment, millis() - start);
@@ -224,6 +356,55 @@ void EInkDisplay::waitWhileBusy(const char* comment) {
 }
 
 void EInkDisplay::initDisplayController() {
+#ifndef X3_USE_X4_INIT
+  if (_x3Mode) {
+    sendCommand(0x00);
+    sendData(0x3F);
+    sendData(0x08);
+    sendCommand(0x61);
+    sendData(0x03);
+    sendData(0x18);
+    sendData(0x02);
+    sendData(0x58);
+    sendCommand(0x65);
+    sendData(0x00);
+    sendData(0x00);
+    sendData(0x00);
+    sendData(0x00);
+    sendCommand(0x03);
+    sendData(0x1D);
+    sendCommand(0x01);
+    sendData(0x07);
+    sendData(0x17);
+    sendData(0x3F);
+    sendData(0x3F);
+    sendData(0x17);
+    sendCommand(0x82);
+    sendData(0x1D);
+    sendCommand(0x06);
+    sendData(0x25);
+    sendData(0x25);
+    sendData(0x3C);
+    sendData(0x37);
+    sendCommand(0x30);
+    sendData(0x09);
+    sendCommand(0xE1);
+    sendData(0x02);
+    sendCommand(0x20);
+    sendData(lut_x3_vcom_full, 42);
+    sendCommand(0x21);
+    sendData(lut_x3_ww_full, 42);
+    sendCommand(0x22);
+    sendData(lut_x3_bw_full, 42);
+    sendCommand(0x23);
+    sendData(lut_x3_wb_full, 42);
+    sendCommand(0x24);
+    sendData(lut_x3_bb_full, 42);
+    isScreenOn = false;
+    return;
+  }
+#endif
+
   if (Serial) Serial.printf("[%lu]   Initializing SSD1677 controller...\n", millis());
 
   const uint8_t TEMP_SENSOR_INTERNAL = 0x80;
@@ -244,11 +425,10 @@ void EInkDisplay::initDisplayController() {
   sendData(0xC0);
   sendData(0x40);
 
-  // Driver output control: set display height (480) and scan direction
-  const uint16_t HEIGHT = 480;
+  // Driver output control: set display height and scan direction
   sendCommand(CMD_DRIVER_OUTPUT_CONTROL);
-  sendData((HEIGHT - 1) % 256);  // gates A0..A7 (low byte)
-  sendData((HEIGHT - 1) / 256);  // gates A8..A9 (high byte)
+  sendData((displayHeight - 1) % 256);
+  sendData((displayHeight - 1) / 256);
   sendData(0x02);                // SM=1 (interlaced), TB=0
 
   // Border waveform control
@@ -256,7 +436,7 @@ void EInkDisplay::initDisplayController() {
   sendData(0x01);
 
   // Set up full screen RAM area
-  setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+  setRamArea(0, 0, displayWidth, displayHeight);
 
   if (Serial) Serial.printf("[%lu]   Clearing RAM buffers...\n", millis());
   sendCommand(CMD_AUTO_WRITE_BW_RAM);  // Auto write BW RAM
@@ -274,7 +454,7 @@ void EInkDisplay::setRamArea(const uint16_t x, uint16_t y, uint16_t w, uint16_t 
   constexpr uint8_t DATA_ENTRY_X_INC_Y_DEC = 0x01;
 
   // Reverse Y coordinate (gates are reversed on this display)
-  y = DISPLAY_HEIGHT - y - h;
+  y = displayHeight - y - h;
 
   // Set data entry mode (X increment, Y decrement for reversed gates)
   sendCommand(CMD_DATA_ENTRY_MODE);
@@ -306,7 +486,7 @@ void EInkDisplay::setRamArea(const uint16_t x, uint16_t y, uint16_t w, uint16_t 
 }
 
 void EInkDisplay::clearScreen(const uint8_t color) const {
-  memset(frameBuffer, color, BUFFER_SIZE);
+  memset(frameBuffer, color, bufferSize);
 }
 
 void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h,
@@ -322,14 +502,14 @@ void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const ui
   // Copy image data to frame buffer
   for (uint16_t row = 0; row < h; row++) {
     const uint16_t destY = y + row;
-    if (destY >= DISPLAY_HEIGHT)
+    if (destY >= displayHeight)
       break;
 
-    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t destOffset = destY * displayWidthBytes + (x / 8);
     const uint16_t srcOffset = row * imageWidthBytes;
 
     for (uint16_t col = 0; col < imageWidthBytes; col++) {
-      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
+      if ((x / 8 + col) >= displayWidthBytes)
         break;
 
       if (fromProgmem) {
@@ -357,14 +537,14 @@ void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t 
   // Copy only black pixels to frame buffer
   for (uint16_t row = 0; row < h; row++) {
     const uint16_t destY = y + row;
-    if (destY >= DISPLAY_HEIGHT)
+    if (destY >= displayHeight)
       break;
 
-    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t destOffset = destY * displayWidthBytes + (x / 8);
     const uint16_t srcOffset = row * imageWidthBytes;
 
     for (uint16_t col = 0; col < imageWidthBytes; col++) {
-      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
+      if ((x / 8 + col) >= displayWidthBytes)
         break;
 
       uint8_t srcByte = fromProgmem ? pgm_read_byte(&imageData[srcOffset + col]) : imageData[srcOffset + col];
@@ -372,7 +552,7 @@ void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t 
     }
   }
 
-  Serial.printf("[%lu]   Transparent image drawn to frame buffer\n", millis());
+  if (Serial) Serial.printf("[%lu]   Transparent image drawn to frame buffer\n", millis());
 }
 
 void EInkDisplay::writeRamBuffer(uint8_t ramBuffer, const uint8_t* data, uint32_t size) {
@@ -388,7 +568,7 @@ void EInkDisplay::writeRamBuffer(uint8_t ramBuffer, const uint8_t* data, uint32_
 }
 
 void EInkDisplay::setFramebuffer(const uint8_t* bwBuffer) const {
-  memcpy(frameBuffer, bwBuffer, BUFFER_SIZE);
+  memcpy(frameBuffer, bwBuffer, bufferSize);
 }
 
 #ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
@@ -413,19 +593,73 @@ void EInkDisplay::grayscaleRevert() {
 }
 
 void EInkDisplay::copyGrayscaleLsbBuffers(const uint8_t* lsbBuffer) {
-  setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-  writeRamBuffer(CMD_WRITE_RAM_BW, lsbBuffer, BUFFER_SIZE);
+  if (!lsbBuffer) {
+    _x3GrayState.lsbValid = false;
+    return;
+  }
+
+  if (_x3Mode) {
+    // X3 single-pass AA: write LSB plane to old-data RAM.
+    uint8_t row[128];
+    auto sendMirroredPlane = [&](const uint8_t* plane) {
+      for (uint16_t y = 0; y < displayHeight; y++) {
+        const uint16_t srcY = static_cast<uint16_t>(displayHeight - 1 - y);
+        const uint8_t* src = plane + static_cast<uint32_t>(srcY) * displayWidthBytes;
+        for (uint16_t x = 0; x < displayWidthBytes; x++) {
+          row[x] = src[x];
+        }
+        sendData(row, displayWidthBytes);
+      }
+    };
+
+    sendCommand(0x10);
+    sendMirroredPlane(lsbBuffer);
+    _x3GrayState.lsbValid = true;
+    return;
+  }
+  setRamArea(0, 0, displayWidth, displayHeight);
+  writeRamBuffer(CMD_WRITE_RAM_BW, lsbBuffer, bufferSize);
 }
 
 void EInkDisplay::copyGrayscaleMsbBuffers(const uint8_t* msbBuffer) {
-  setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-  writeRamBuffer(CMD_WRITE_RAM_RED, msbBuffer, BUFFER_SIZE);
+  if (!msbBuffer) {
+    return;
+  }
+
+  if (_x3Mode) {
+    if (!_x3GrayState.lsbValid) {
+      return;
+    }
+
+    uint8_t row[128];
+    auto sendMirroredPlane = [&](const uint8_t* plane) {
+      for (uint16_t y = 0; y < displayHeight; y++) {
+        const uint16_t srcY = static_cast<uint16_t>(displayHeight - 1 - y);
+        const uint8_t* src = plane + static_cast<uint32_t>(srcY) * displayWidthBytes;
+        for (uint16_t x = 0; x < displayWidthBytes; x++) {
+          row[x] = src[x];
+        }
+        sendData(row, displayWidthBytes);
+      }
+    };
+
+    sendCommand(0x13);
+    sendMirroredPlane(msbBuffer);
+    return;
+  }
+  setRamArea(0, 0, displayWidth, displayHeight);
+  writeRamBuffer(CMD_WRITE_RAM_RED, msbBuffer, bufferSize);
 }
 
 void EInkDisplay::copyGrayscaleBuffers(const uint8_t* lsbBuffer, const uint8_t* msbBuffer) {
-  setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-  writeRamBuffer(CMD_WRITE_RAM_BW, lsbBuffer, BUFFER_SIZE);
-  writeRamBuffer(CMD_WRITE_RAM_RED, msbBuffer, BUFFER_SIZE);
+  if (_x3Mode) {
+    copyGrayscaleLsbBuffers(lsbBuffer);
+    copyGrayscaleMsbBuffers(msbBuffer);
+    return;
+  }
+  setRamArea(0, 0, displayWidth, displayHeight);
+  writeRamBuffer(CMD_WRITE_RAM_BW, lsbBuffer, bufferSize);
+  writeRamBuffer(CMD_WRITE_RAM_RED, msbBuffer, bufferSize);
 }
 
 #ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
@@ -435,15 +669,45 @@ void EInkDisplay::copyGrayscaleBuffers(const uint8_t* lsbBuffer, const uint8_t* 
  * grayscale display.
  */
 void EInkDisplay::cleanupGrayscaleBuffers(const uint8_t* bwBuffer) {
-  setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-  writeRamBuffer(CMD_WRITE_RAM_RED, bwBuffer, BUFFER_SIZE);
+  if (_x3Mode) {
+    if (!bwBuffer) {
+      return;
+    }
+
+    uint8_t row[128];
+    auto sendMirroredPlane = [&](const uint8_t* plane, bool invertBits) {
+      for (uint16_t y = 0; y < displayHeight; y++) {
+        const uint16_t srcY = static_cast<uint16_t>(displayHeight - 1 - y);
+        const uint8_t* src = plane + static_cast<uint32_t>(srcY) * displayWidthBytes;
+        for (uint16_t x = 0; x < displayWidthBytes; x++) {
+          row[x] = invertBits ? static_cast<uint8_t>(~src[x]) : src[x];
+        }
+        sendData(row, displayWidthBytes);
+      }
+    };
+
+    // Rebase both X3 planes from restored BW buffer so next differential update
+    // compares from a coherent known state.
+    sendCommand(0x13);
+    sendMirroredPlane(bwBuffer, false);
+    sendCommand(0x10);
+    sendMirroredPlane(bwBuffer, false);
+
+    _x3RedRamSynced = true;
+    _x3ForceFullSyncNext = false;
+    _x3ForcedConditionPassesNext = 0;
+    return;
+  }
+
+  setRamArea(0, 0, displayWidth, displayHeight);
+  writeRamBuffer(CMD_WRITE_RAM_RED, bwBuffer, bufferSize);
 }
 #endif
 
 void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
-  if (!isScreenOn && !turnOffScreen)
+  if (!_x3Mode && !isScreenOn && !turnOffScreen)
   {
-    // Force half refresh if screen is off
+    // Force half refresh if screen is off (non-X3 only)
     mode = HALF_REFRESH;
   }
 
@@ -453,20 +717,163 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     grayscaleRevert();
   }
 
+  if (_x3Mode) {
+    // X3 update policy: RED RAM (0x10) on the controller stores the previous
+    // frame for differential updates, eliminating the 52 KB _x3PrevFrame
+    // software buffer.  CMD04 re-powers the charge pump when needed.
+    // On X3, treat HALF refresh as fast differential mode.
+    // Reader uses HALF as a cadence hint, but forcing full here makes turns too slow.
+    const bool fastMode = (mode != FULL_REFRESH);
+    uint8_t row[128];
+    auto sendCommandDataX3 = [&](uint8_t cmd, const uint8_t* data, uint16_t len) {
+      SPI.beginTransaction(spiSettings);
+      digitalWrite(_cs, LOW);
+      digitalWrite(_dc, LOW);
+      SPI.transfer(cmd);
+      if (len > 0 && data != nullptr) {
+        digitalWrite(_dc, HIGH);
+        SPI.writeBytes(data, len);
+      }
+      digitalWrite(_cs, HIGH);
+      SPI.endTransaction();
+    };
+    auto sendCommandDataByteX3 = [&](uint8_t cmd, uint8_t d0, uint8_t d1) {
+      const uint8_t d[2] = {d0, d1};
+      sendCommandDataX3(cmd, d, 2);
+    };
+    auto sendMirroredPlane = [&](const uint8_t* plane, bool invertBits) {
+      for (uint16_t y = 0; y < displayHeight; y++) {
+        const uint16_t srcY = static_cast<uint16_t>(displayHeight - 1 - y);
+        const uint8_t* src = plane + static_cast<uint32_t>(srcY) * displayWidthBytes;
+        for (uint16_t x = 0; x < displayWidthBytes; x++) {
+          row[x] = invertBits ? static_cast<uint8_t>(~src[x]) : src[x];
+        }
+        sendData(row, displayWidthBytes);
+      }
+    };
+
+    const bool forcedFullSync = _x3ForceFullSyncNext;
+    const bool doFullSync = !fastMode || !_x3RedRamSynced ||
+                            _x3InitialFullSyncsRemaining > 0 || forcedFullSync;
+
+    if (Serial) {
+      Serial.printf("[%lu]   X3_OEM_%s\n", millis(), doFullSync ? "FULL" : "FAST");
+    }
+    _x3GrayState.lastBaseWasPartial = !doFullSync;
+
+    if (doFullSync) {
+      // Full sync: img LUTs, inverted data to both RAMs
+      sendCommandDataX3(0x20, lut_x3_vcom_img, 42);
+      sendCommandDataX3(0x21, lut_x3_ww_img, 42);
+      sendCommandDataX3(0x22, lut_x3_bw_img, 42);
+      sendCommandDataX3(0x23, lut_x3_wb_img, 42);
+      sendCommandDataX3(0x24, lut_x3_bb_img, 42);
+
+      sendCommand(0x13);
+      sendMirroredPlane(frameBuffer, true);
+      sendCommand(0x10);
+      sendMirroredPlane(frameBuffer, true);
+
+      sendCommandDataByteX3(0x50, 0xA9, 0x07);
+    } else {
+      // Fast differential: full LUTs, RED RAM (0x10) retains previous frame
+      sendCommandDataX3(0x20, lut_x3_vcom_full, 42);
+      sendCommandDataX3(0x21, lut_x3_ww_full, 42);
+      sendCommandDataX3(0x22, lut_x3_bw_full, 42);
+      sendCommandDataX3(0x23, lut_x3_wb_full, 42);
+      sendCommandDataX3(0x24, lut_x3_bb_full, 42);
+
+      // Write only new data to 0x13; controller diffs against 0x10
+      sendCommand(0x13);
+      sendMirroredPlane(frameBuffer, false);
+
+      sendCommandDataByteX3(0x50, 0x29, 0x07);
+    }
+
+    const bool needCmd04 = !isScreenOn || turnOffScreen || doFullSync;
+    if (needCmd04) {
+      sendCommand(0x04);
+      waitForRefresh(" X3_CMD04");
+      isScreenOn = true;
+    }
+
+    if (Serial) Serial.printf("[%lu]   X3_OEM_TRIGGER=0x12\n", millis());
+    sendCommand(0x12);
+    waitForRefresh(" X3_CMD12");
+    if (!fastMode) delay(200);
+
+    // One-time light settle after the first major full-sync improves early
+    // page-turn quality on X3 without paying the old 6-pass cost.
+    uint8_t postConditionPasses = 0;
+    if (doFullSync) {
+      if (forcedFullSync) postConditionPasses = _x3ForcedConditionPassesNext;
+      else if (_x3InitialFullSyncsRemaining == 1) postConditionPasses = 1;
+    }
+
+    if (postConditionPasses > 0) {
+      const uint16_t xStart = 0;
+      const uint16_t xEnd = static_cast<uint16_t>(displayWidth - 1);
+      const uint16_t yStart = 0;
+      const uint16_t yEnd = static_cast<uint16_t>(displayHeight - 1);
+      const uint8_t w[9] = {
+          static_cast<uint8_t>(xStart >> 8), static_cast<uint8_t>(xStart & 0xFF), static_cast<uint8_t>(xEnd >> 8),
+          static_cast<uint8_t>(xEnd & 0xFF), static_cast<uint8_t>(yStart >> 8), static_cast<uint8_t>(yStart & 0xFF),
+          static_cast<uint8_t>(yEnd >> 8), static_cast<uint8_t>(yEnd & 0xFF), 0x01};
+
+      sendCommandDataX3(0x20, lut_x3_vcom_full, 42);
+      sendCommandDataX3(0x21, lut_x3_ww_full, 42);
+      sendCommandDataX3(0x22, lut_x3_bw_full, 42);
+      sendCommandDataX3(0x23, lut_x3_wb_full, 42);
+      sendCommandDataX3(0x24, lut_x3_bb_full, 42);
+      sendCommandDataByteX3(0x50, 0x29, 0x07);
+
+      for (uint8_t i = 0; i < postConditionPasses; i++) {
+        if (Serial) Serial.printf("[%lu]   X3_OEM_COND %u/%u\n", millis(), static_cast<unsigned>(i + 1), static_cast<unsigned>(postConditionPasses));
+        sendCommand(0x91);
+        sendCommandDataX3(0x90, w, 9);
+        sendCommand(0x13);
+        sendMirroredPlane(frameBuffer, false);
+        sendCommand(0x92);
+        if (!isScreenOn) {
+          sendCommand(0x04);
+          waitForRefresh(" X3_CMD04");
+          isScreenOn = true;
+        }
+        if (Serial) Serial.printf("[%lu]   X3_OEM_TRIGGER=0x12(cond)\n", millis());
+        sendCommand(0x12);
+        waitForRefresh(" X3_CMD12(cond)");
+      }
+    }
+
+    // Sync RED RAM (0x10) with non-inverted current frame for next fast diff
+    sendCommand(0x10);
+    sendMirroredPlane(frameBuffer, false);
+    _x3RedRamSynced = true;
+
+    if (doFullSync && _x3InitialFullSyncsRemaining > 0) {
+      _x3InitialFullSyncsRemaining--;
+    }
+    _x3ForceFullSyncNext = false;
+    _x3ForcedConditionPassesNext = 0;
+
+    isScreenOn = !turnOffScreen;
+    return;
+  }
+
   // Set up full screen RAM area
-  setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+  setRamArea(0, 0, displayWidth, displayHeight);
 
   if (mode != FAST_REFRESH) {
     // For full refresh, write to both buffers before refresh
-    writeRamBuffer(CMD_WRITE_RAM_BW, frameBuffer, BUFFER_SIZE);
-    writeRamBuffer(CMD_WRITE_RAM_RED, frameBuffer, BUFFER_SIZE);
+    writeRamBuffer(CMD_WRITE_RAM_BW, frameBuffer, bufferSize);
+    writeRamBuffer(CMD_WRITE_RAM_RED, frameBuffer, bufferSize);
   } else {
     // For fast refresh, write to BW buffer only
-    writeRamBuffer(CMD_WRITE_RAM_BW, frameBuffer, BUFFER_SIZE);
+    writeRamBuffer(CMD_WRITE_RAM_BW, frameBuffer, bufferSize);
     // In single buffer mode, the RED RAM should already contain the previous frame
     // In dual buffer mode, we write back frameBufferActive which is the last frame
 #ifndef EINK_DISPLAY_SINGLE_BUFFER_MODE
-    writeRamBuffer(CMD_WRITE_RAM_RED, frameBufferActive, BUFFER_SIZE);
+    writeRamBuffer(CMD_WRITE_RAM_RED, frameBufferActive, bufferSize);
 #endif
   }
 
@@ -480,8 +887,8 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
 #ifdef EINK_DISPLAY_SINGLE_BUFFER_MODE
   // In single buffer mode always sync RED RAM after refresh to prepare for next fast refresh
   // This ensures RED contains the currently displayed frame for differential comparison
-  setRamArea(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-  writeRamBuffer(CMD_WRITE_RAM_RED, frameBuffer, BUFFER_SIZE);
+  setRamArea(0, 0, displayWidth, displayHeight);
+  writeRamBuffer(CMD_WRITE_RAM_RED, frameBuffer, bufferSize);
 #endif
 }
 
@@ -492,7 +899,7 @@ void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
   if (Serial) Serial.printf("[%lu]   Displaying window at (%d,%d) size (%dx%d)\n", millis(), x, y, w, h);
 
   // Validate bounds
-  if (x + w > DISPLAY_WIDTH || y + h > DISPLAY_HEIGHT) {
+  if (x + w > displayWidth || y + h > displayHeight) {
     if (Serial) Serial.printf("[%lu]   ERROR: Window bounds exceed display dimensions!\n", millis());
     return;
   }
@@ -526,7 +933,7 @@ void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
   // Extract window region from frame buffer
   for (uint16_t row = 0; row < h; row++) {
     const uint16_t srcY = y + row;
-    const uint16_t srcOffset = srcY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t srcOffset = srcY * displayWidthBytes + (x / 8);
     const uint16_t dstOffset = row * windowWidthBytes;
     memcpy(&windowBuffer[dstOffset], &frameBuffer[srcOffset], windowWidthBytes);
   }
@@ -542,7 +949,7 @@ void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
   std::vector<uint8_t> previousWindowBuffer(windowBufferSize);
   for (uint16_t row = 0; row < h; row++) {
     const uint16_t srcY = y + row;
-    const uint16_t srcOffset = srcY * DISPLAY_WIDTH_BYTES + (x / 8);
+    const uint16_t srcOffset = srcY * displayWidthBytes + (x / 8);
     const uint16_t dstOffset = row * windowWidthBytes;
     memcpy(&previousWindowBuffer[dstOffset], &frameBufferActive[srcOffset], windowWidthBytes);
   }
@@ -562,6 +969,78 @@ void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
 }
 
 void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
+  if (_x3Mode) {
+    // X3 AA pipeline: LSB->0x10 + MSB->0x13, trigger 0x12 with X3 LUT bank.
+    drawGrayscale = false;
+    inGrayscaleMode = false;
+
+    if (!_x3GrayState.lsbValid) {
+      return;
+    }
+
+    auto sendCommandDataX3 = [&](uint8_t cmd, const uint8_t* data, uint16_t len) {
+      SPI.beginTransaction(spiSettings);
+      digitalWrite(_cs, LOW);
+      digitalWrite(_dc, LOW);
+      SPI.transfer(cmd);
+      if (len > 0 && data != nullptr) {
+        digitalWrite(_dc, HIGH);
+        SPI.writeBytes(data, len);
+      }
+      digitalWrite(_cs, HIGH);
+      SPI.endTransaction();
+    };
+    auto sendCommandDataByteX3 = [&](uint8_t cmd, uint8_t d0, uint8_t d1) {
+      const uint8_t d[2] = {d0, d1};
+      sendCommandDataX3(cmd, d, 2);
+    };
+    uint8_t row[128];
+    auto sendMirroredPlane = [&](const uint8_t* plane, bool invertBits) {
+      for (uint16_t y = 0; y < displayHeight; y++) {
+        const uint16_t srcY = static_cast<uint16_t>(displayHeight - 1 - y);
+        const uint8_t* src = plane + static_cast<uint32_t>(srcY) * displayWidthBytes;
+        for (uint16_t x = 0; x < displayWidthBytes; x++) {
+          row[x] = invertBits ? static_cast<uint8_t>(~src[x]) : src[x];
+        }
+        sendData(row, displayWidthBytes);
+      }
+    };
+
+    const uint8_t* vcom = lut_x3_vcom_full;
+    const uint8_t* ww = lut_x3_ww_full;
+    const uint8_t* bw = lut_x3_bw_full;
+    const uint8_t* wb = lut_x3_wb_full;
+    const uint8_t* bb = lut_x3_bb_full;
+    uint8_t dataInterval0 = 0x29;
+    uint8_t dataInterval1 = 0x07;
+    if (Serial) Serial.printf("[%lu]   X3_GRAY_MODE=full29\n", millis());
+    sendCommandDataX3(0x20, vcom, 42);
+    sendCommandDataX3(0x21, ww, 42);
+    sendCommandDataX3(0x22, bw, 42);
+    sendCommandDataX3(0x23, wb, 42);
+    sendCommandDataX3(0x24, bb, 42);
+    sendCommandDataByteX3(0x50, dataInterval0, dataInterval1);
+
+    if (!isScreenOn) {
+      sendCommand(0x04);
+      waitForRefresh(" X3_CMD04(gray)");
+      isScreenOn = true;
+    }
+
+    sendCommand(0x12);
+    waitForRefresh(" X3_CMD12(gray)");
+
+    // RAM baseline is re-established from restored BW buffer by
+    // cleanupGrayscaleBuffers() after this function returns.
+    _x3RedRamSynced = false;
+    _x3ForceFullSyncNext = false;
+    _x3ForcedConditionPassesNext = 0;
+
+    _x3GrayState.lsbValid = false;
+    isScreenOn = !turnOffScreen;
+    return;
+  }
+
   drawGrayscale = false;
   inGrayscaleMode = true;
 
@@ -572,6 +1051,11 @@ void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
 }
 
 void EInkDisplay::refreshDisplay(const RefreshMode mode, const bool turnOffScreen) {
+  if (_x3Mode) {
+    displayBuffer(mode, turnOffScreen);
+    return;
+  }
+
   // Configure Display Update Control 1
   sendCommand(CMD_DISPLAY_UPDATE_CTRL1);
   sendData((mode == FAST_REFRESH) ? CTRL1_NORMAL : CTRL1_BYPASS_RED);  // Configure buffer comparison mode
