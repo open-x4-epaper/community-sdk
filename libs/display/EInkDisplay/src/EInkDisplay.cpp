@@ -790,8 +790,7 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
       sendCommandDataByteX3(0x50, 0x29, 0x07);
     }
 
-    const bool needCmd04 = !isScreenOn || turnOffScreen || doFullSync;
-    if (needCmd04) {
+    if (!isScreenOn || doFullSync) {
       sendCommand(0x04);
       waitForRefresh(" X3_CMD04");
       isScreenOn = true;
@@ -800,6 +799,16 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     if (Serial) Serial.printf("[%lu]   X3_OEM_TRIGGER=0x12\n", millis());
     sendCommand(0x12);
     waitForRefresh(" X3_CMD12");
+
+    // Power off analog rails immediately after refresh if requested,
+    // before RAM bookkeeping (which only needs SPI, not the charge pump).
+    // This mirrors X4 behavior where power-off is part of the refresh cycle.
+    if (turnOffScreen) {
+      sendCommand(0x02);
+      waitForRefresh(" X3_CMD02_POWEROFF");
+      isScreenOn = false;
+    }
+
     if (!fastMode) delay(200);
 
     // One-time light settle after the first major full-sync improves early
@@ -845,7 +854,8 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
       }
     }
 
-    // Sync RED RAM (0x10) with non-inverted current frame for next fast diff
+    // Sync RED RAM (0x10) with non-inverted current frame for next fast diff.
+    // This is a controller memory write — doesn't need the charge pump.
     sendCommand(0x10);
     sendMirroredPlane(frameBuffer, false);
     _x3RedRamSynced = true;
@@ -855,8 +865,6 @@ void EInkDisplay::displayBuffer(RefreshMode mode, const bool turnOffScreen) {
     }
     _x3ForceFullSyncNext = false;
     _x3ForcedConditionPassesNext = 0;
-
-    isScreenOn = !turnOffScreen;
     return;
   }
 
@@ -1030,6 +1038,12 @@ void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
     sendCommand(0x12);
     waitForRefresh(" X3_CMD12(gray)");
 
+    if (turnOffScreen) {
+      sendCommand(0x02);
+      waitForRefresh(" X3_CMD02_POWEROFF(gray)");
+      isScreenOn = false;
+    }
+
     // RAM baseline is re-established from restored BW buffer by
     // cleanupGrayscaleBuffers() after this function returns.
     _x3RedRamSynced = false;
@@ -1037,7 +1051,6 @@ void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
     _x3ForcedConditionPassesNext = 0;
 
     _x3GrayState.lsbValid = false;
-    isScreenOn = !turnOffScreen;
     return;
   }
 
