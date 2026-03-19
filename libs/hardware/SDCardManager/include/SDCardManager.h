@@ -46,7 +46,7 @@ class SDCardManager {
   }
 
   uint64_t sdTotalBytes() const;
-  uint64_t sdUsedBytes() const;
+  uint64_t sdUsedBytes();
 
   bool openFileForRead(const char* moduleName, const char* path, FsFile& file);
   bool openFileForRead(const char* moduleName, const std::string& path, FsFile& file);
@@ -65,8 +65,8 @@ class SDCardManager {
   SdFat sd;
 
   uint64_t cachedTotalBytes = 0;
-  mutable uint64_t cachedUsedBytes = 0;
-  mutable bool cachedUsedBytesValid = false;
+  uint64_t cachedUsedBytes = 0;
+  bool cachedUsedBytesValid = false;
 
   void invalidateUsedBytesCache();
 };

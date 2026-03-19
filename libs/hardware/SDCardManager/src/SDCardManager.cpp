@@ -249,7 +249,7 @@ void SDCardManager::invalidateUsedBytesCache() { cachedUsedBytesValid = false; }
 
 uint64_t SDCardManager::sdTotalBytes() const { return cachedTotalBytes; }
 
-uint64_t SDCardManager::sdUsedBytes() const {
+uint64_t SDCardManager::sdUsedBytes() {
   if (!initialized) return 0;
   if (!cachedUsedBytesValid) {
     auto* vol = sd.vol();
