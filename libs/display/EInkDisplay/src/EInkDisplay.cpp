@@ -316,26 +316,53 @@ void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const ui
     return;
   }
 
-  // Calculate bytes per line for the image
-  const uint16_t imageWidthBytes = w / 8;
+  // Bytes per source row (1bpp, MSB first)
+  const uint16_t imageWidthBytes = (w + 7) / 8;
 
-  // Copy image data to frame buffer
-  for (uint16_t row = 0; row < h; row++) {
-    const uint16_t destY = y + row;
-    if (destY >= DISPLAY_HEIGHT)
-      break;
+  // Fast path for byte-aligned X (legacy behavior, fastest)
+  if ((x & 0x7) == 0) {
+    for (uint16_t row = 0; row < h; row++) {
+      const uint16_t destY = y + row;
+      if (destY >= DISPLAY_HEIGHT) break;
 
-    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
-    const uint16_t srcOffset = row * imageWidthBytes;
+      const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+      const uint16_t srcOffset = row * imageWidthBytes;
 
-    for (uint16_t col = 0; col < imageWidthBytes; col++) {
-      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
-        break;
+      for (uint16_t col = 0; col < imageWidthBytes; col++) {
+        if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES) break;
 
-      if (fromProgmem) {
-        frameBuffer[destOffset + col] = pgm_read_byte(&imageData[srcOffset + col]);
-      } else {
-        frameBuffer[destOffset + col] = imageData[srcOffset + col];
+        if (fromProgmem) {
+          frameBuffer[destOffset + col] = pgm_read_byte(&imageData[srcOffset + col]);
+        } else {
+          frameBuffer[destOffset + col] = imageData[srcOffset + col];
+        }
+      }
+    }
+  } else {
+    // Bit-accurate path for unaligned X.
+    // Writes each destination bit so placement is pixel-precise regardless of x % 8.
+    for (uint16_t row = 0; row < h; row++) {
+      const uint16_t destY = y + row;
+      if (destY >= DISPLAY_HEIGHT) break;
+
+      const uint16_t srcOffset = row * imageWidthBytes;
+      const uint32_t rowBase = static_cast<uint32_t>(destY) * DISPLAY_WIDTH_BYTES;
+
+      for (uint16_t col = 0; col < w; col++) {
+        const uint16_t destX = x + col;
+        if (destX >= DISPLAY_WIDTH) break;
+
+        const uint16_t srcByteIdx = srcOffset + (col / 8);
+        const uint8_t srcByte = fromProgmem ? pgm_read_byte(&imageData[srcByteIdx]) : imageData[srcByteIdx];
+        const uint8_t srcBit = (srcByte >> (7 - (col % 8))) & 0x1;
+
+        const uint32_t dstByteIdx = rowBase + (destX / 8);
+        const uint8_t dstBitMask = static_cast<uint8_t>(1u << (7 - (destX % 8)));
+        if (srcBit) {
+          frameBuffer[dstByteIdx] |= dstBitMask;   // white
+        } else {
+          frameBuffer[dstByteIdx] &= ~dstBitMask;  // black
+        }
       }
     }
   }
@@ -345,30 +372,55 @@ void EInkDisplay::drawImage(const uint8_t* imageData, const uint16_t x, const ui
 
 // Draws only black pixels from the image, leaves white pixels clear (unchanged in framebuffer)
 void EInkDisplay::drawImageTransparent(const uint8_t* imageData, const uint16_t x, const uint16_t y, const uint16_t w, const uint16_t h,
-                                     const bool fromProgmem) const {
+                                      const bool fromProgmem) const {
   if (!frameBuffer) {
     Serial.printf("[%lu]   ERROR: Frame buffer not allocated!\n", millis());
     return;
   }
 
-  // Calculate bytes per line for the image
-  const uint16_t imageWidthBytes = w / 8;
+  // Bytes per source row (1bpp, MSB first)
+  const uint16_t imageWidthBytes = (w + 7) / 8;
 
-  // Copy only black pixels to frame buffer
-  for (uint16_t row = 0; row < h; row++) {
-    const uint16_t destY = y + row;
-    if (destY >= DISPLAY_HEIGHT)
-      break;
+  // Fast path for byte-aligned X (legacy behavior, fastest)
+  if ((x & 0x7) == 0) {
+    for (uint16_t row = 0; row < h; row++) {
+      const uint16_t destY = y + row;
+      if (destY >= DISPLAY_HEIGHT) break;
 
-    const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
-    const uint16_t srcOffset = row * imageWidthBytes;
+      const uint16_t destOffset = destY * DISPLAY_WIDTH_BYTES + (x / 8);
+      const uint16_t srcOffset = row * imageWidthBytes;
 
-    for (uint16_t col = 0; col < imageWidthBytes; col++) {
-      if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES)
-        break;
+      for (uint16_t col = 0; col < imageWidthBytes; col++) {
+        if ((x / 8 + col) >= DISPLAY_WIDTH_BYTES) break;
 
-      uint8_t srcByte = fromProgmem ? pgm_read_byte(&imageData[srcOffset + col]) : imageData[srcOffset + col];
-      frameBuffer[destOffset + col] &= srcByte;
+        const uint8_t srcByte = fromProgmem ? pgm_read_byte(&imageData[srcOffset + col]) : imageData[srcOffset + col];
+        frameBuffer[destOffset + col] &= srcByte;
+      }
+    }
+  } else {
+    // Bit-accurate path for unaligned X.
+    // Transparent blit copies only black pixels (source bit 0).
+    for (uint16_t row = 0; row < h; row++) {
+      const uint16_t destY = y + row;
+      if (destY >= DISPLAY_HEIGHT) break;
+
+      const uint16_t srcOffset = row * imageWidthBytes;
+      const uint32_t rowBase = static_cast<uint32_t>(destY) * DISPLAY_WIDTH_BYTES;
+
+      for (uint16_t col = 0; col < w; col++) {
+        const uint16_t destX = x + col;
+        if (destX >= DISPLAY_WIDTH) break;
+
+        const uint16_t srcByteIdx = srcOffset + (col / 8);
+        const uint8_t srcByte = fromProgmem ? pgm_read_byte(&imageData[srcByteIdx]) : imageData[srcByteIdx];
+        const uint8_t srcBit = (srcByte >> (7 - (col % 8))) & 0x1;
+
+        if (srcBit == 0) {
+          const uint32_t dstByteIdx = rowBase + (destX / 8);
+          const uint8_t dstBitMask = static_cast<uint8_t>(1u << (7 - (destX % 8)));
+          frameBuffer[dstByteIdx] &= ~dstBitMask;  // draw black pixel
+        }
+      }
     }
   }
 
