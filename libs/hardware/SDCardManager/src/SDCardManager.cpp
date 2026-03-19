@@ -193,7 +193,6 @@ bool SDCardManager::ensureDirectoryExists(const char* path) {
   }
 
   // Create the directory
-  invalidateUsedBytesCache();
   if (sd.mkdir(path)) {
     if (Serial) Serial.printf("[%lu] [SD] Path is not a directory\n", millis());
     if (Serial) Serial.printf("Created directory: %s\n", path);
@@ -228,7 +227,6 @@ bool SDCardManager::openFileForRead(const char* moduleName, const String& path, 
 }
 
 bool SDCardManager::openFileForWrite(const char* moduleName, const char* path, FsFile& file) {
-  invalidateUsedBytesCache();
   file = sd.open(path, O_RDWR | O_CREAT | O_TRUNC);
   if (!file) {
     if (Serial) Serial.printf("[%lu] [%s] Failed to open file for writing: %s\n", millis(), moduleName, path);
@@ -245,13 +243,12 @@ bool SDCardManager::openFileForWrite(const char* moduleName, const String& path,
   return openFileForWrite(moduleName, path.c_str(), file);
 }
 
-void SDCardManager::invalidateUsedBytesCache() { cachedUsedBytesValid = false; }
-
 uint64_t SDCardManager::sdTotalBytes() const { return cachedTotalBytes; }
 
 uint64_t SDCardManager::sdUsedBytes() {
   if (!initialized) return 0;
-  if (!cachedUsedBytesValid) {
+  const uint32_t now = millis();
+  if (!cachedUsedBytesValid || (now - cachedUsedBytesAt) >= USED_BYTES_CACHE_TTL_MS) {
     auto* vol = sd.vol();
     if (!vol) return 0;
     const int32_t freeClusters = vol->freeClusterCount();
@@ -263,12 +260,12 @@ uint64_t SDCardManager::sdUsedBytes() {
       cachedUsedBytes = (clusterCount - cappedFree) * vol->bytesPerCluster();
     }
     cachedUsedBytesValid = true;
+    cachedUsedBytesAt = now;
   }
   return cachedUsedBytes;
 }
 
 bool SDCardManager::removeDir(const char* path) {
-  invalidateUsedBytesCache();
   // 1. Open the directory
   auto dir = sd.open(path);
   if (!dir) {

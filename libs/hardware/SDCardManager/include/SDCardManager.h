@@ -27,23 +27,11 @@ class SDCardManager {
   bool ensureDirectoryExists(const char* path);
 
   FsFile open(const char* path, const oflag_t oflag = O_RDONLY) { return sd.open(path, oflag); }
-  bool mkdir(const char* path, const bool pFlag = true) {
-    invalidateUsedBytesCache();
-    return sd.mkdir(path, pFlag);
-  }
+  bool mkdir(const char* path, const bool pFlag = true) { return sd.mkdir(path, pFlag); }
   bool exists(const char* path) { return sd.exists(path); }
-  bool remove(const char* path) {
-    invalidateUsedBytesCache();
-    return sd.remove(path);
-  }
-  bool rmdir(const char* path) {
-    invalidateUsedBytesCache();
-    return sd.rmdir(path);
-  }
-  bool rename(const char* path, const char* newPath) {
-    invalidateUsedBytesCache();
-    return sd.rename(path, newPath);
-  }
+  bool remove(const char* path) { return sd.remove(path); }
+  bool rmdir(const char* path) { return sd.rmdir(path); }
+  bool rename(const char* path, const char* newPath) { return sd.rename(path, newPath); }
 
   uint64_t sdTotalBytes() const;
   uint64_t sdUsedBytes();
@@ -64,11 +52,12 @@ class SDCardManager {
   bool initialized = false;
   SdFat sd;
 
+  static constexpr uint32_t USED_BYTES_CACHE_TTL_MS = 20000; // 20 seconds
+
   uint64_t cachedTotalBytes = 0;
   uint64_t cachedUsedBytes = 0;
+  uint32_t cachedUsedBytesAt = 0;
   bool cachedUsedBytesValid = false;
-
-  void invalidateUsedBytesCache();
 };
 
 #define SdMan SDCardManager::getInstance()
