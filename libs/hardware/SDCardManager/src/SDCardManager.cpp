@@ -275,3 +275,16 @@ bool SDCardManager::removeDir(const char* path) {
 
   return sd.rmdir(path);
 }
+
+uint64_t SDCardManager::cardTotalBytes() {
+  if (!initialized) return 0;
+  // Use FAT partition size (clusterCount × clusterSize) — matches what the OS reports as capacity.
+  return (uint64_t)sd.vol()->clusterCount() * sd.vol()->bytesPerCluster();
+}
+
+uint64_t SDCardManager::cardFreeBytes() {
+  if (!initialized) return 0;
+  uint32_t freeClusters = sd.freeClusterCount();
+  uint32_t bytesPerCluster = sd.vol()->bytesPerCluster();
+  return (uint64_t)freeClusters * bytesPerCluster;
+}

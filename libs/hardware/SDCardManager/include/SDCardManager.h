@@ -40,6 +40,11 @@ class SDCardManager {
   bool openFileForWrite(const char* moduleName, const String& path, FsFile& file);
   bool removeDir(const char* path);
 
+  // Returns total SD card size in bytes (fast — reads card registers).
+  uint64_t cardTotalBytes();
+  // Returns free space in bytes (slow — performs a full FAT scan; cache result at call site).
+  uint64_t cardFreeBytes();
+
  static SDCardManager& getInstance() { return instance; }
 
  private:
