@@ -40,7 +40,7 @@
 // Power management
 #define CMD_DEEP_SLEEP 0x10  // Deep sleep
 
-// Custom LUT for fast refresh
+// Custom LUT for fast refresh (differential 3-pass mode, 12 frames)
 const unsigned char lut_grayscale[] PROGMEM = {
     // 00 black/white
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -223,6 +223,61 @@ void EInkDisplay::requestResync(uint8_t settlePasses) {
   _x3ForceFullSyncNext = _x3Mode;
   _x3ForcedConditionPassesNext = _x3Mode ? settlePasses : 0;
 }
+
+// Factory LUT extracted from firmware V3.1.9_CH_X4_0117.bin by CrazyCoder.
+// Uses absolute 2-bit pixel encoding: BW RAM = bit0 (LSB), RED RAM = bit1 (MSB).
+// Pixel states: {RED=0,BW=0}=black, {RED=0,BW=1}=dark gray,
+//               {RED=1,BW=0}=light gray, {RED=1,BW=1}=white.
+
+// Fast mode (LUT1): 60 waveform frames, FR=0x44, VCOM=-2.0V.
+// Used for XTH reading in container mode. ~40% faster than quality mode.
+const unsigned char lut_factory_fast[] PROGMEM = {
+    // VS patterns (LUT0-LUT3 + VCOM), 10 bytes each
+    0x00, 0x4A, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT0: state 00 (black)
+    0x80, 0x62, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT1: state 01 (dark gray)
+    0x88, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT2: state 10 (light gray)
+    0xA8, 0x44, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT3: state 11 (white)
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT4: VCOM
+    // TP/RP timing groups (G0-G9), 5 bytes each
+    0x09, 0x0C, 0x03, 0x03, 0x00,  // G0: 27 frames
+    0x0F, 0x03, 0x07, 0x03, 0x00,  // G1: 28 frames
+    0x03, 0x00, 0x02, 0x00, 0x00,  // G2:  5 frames
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G3
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G4
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G5
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G6
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G7
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G8
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G9
+    // Frame rate (higher = faster clock): 0x44 = 68
+    0x44, 0x44, 0x44, 0x44, 0x44,
+    // Voltages: VGH, VSH1, VSH2, VSL, VCOM
+    0x17, 0x41, 0xA8, 0x32, 0x50};
+
+// Quality mode (LUT2): 50 waveform frames, FR=0x22, VCOM=-1.2V.
+// Used for standalone XTH wallpapers/covers. Less ghosting, ~67% slower than fast mode.
+const unsigned char lut_factory_quality[] PROGMEM = {
+    // VS patterns (LUT0-LUT3 + VCOM), 10 bytes each
+    0x00, 0x4A, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT0: state 00 (black)
+    0x80, 0x62, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT1: state 01 (dark gray)
+    0x88, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT2: state 10 (light gray)
+    0xA8, 0x44, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT3: state 11 (white)
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // LUT4: VCOM
+    // TP/RP timing groups (G0-G9), 5 bytes each
+    0x08, 0x0B, 0x02, 0x03, 0x00,  // G0: 24 frames
+    0x0C, 0x02, 0x07, 0x02, 0x00,  // G1: 23 frames
+    0x01, 0x00, 0x02, 0x00, 0x00,  // G2:  3 frames
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G3
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G4
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G5
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G6
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G7
+    0x00, 0x00, 0x00, 0x00, 0x00,  // G8
+    0x00, 0x00, 0x00, 0x00, 0x01,  // G9 (RP[9]=1, no practical effect: all-zero timing)
+    // Frame rate (lower = slower clock): 0x22 = 34
+    0x22, 0x22, 0x22, 0x22, 0x22,
+    // Voltages: VGH, VSH1, VSH2, VSL, VCOM
+    0x17, 0x41, 0xA8, 0x32, 0x30};
 
 EInkDisplay::EInkDisplay(int8_t sclk, int8_t mosi, int8_t cs, int8_t dc, int8_t rst, int8_t busy)
     : _sclk(sclk),
@@ -1009,7 +1064,7 @@ void EInkDisplay::displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
   if (Serial) Serial.printf("[%lu]   Window display complete\n", millis());
 }
 
-void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
+void EInkDisplay::displayGrayBuffer(const bool turnOffScreen, const unsigned char* lut, const bool factoryMode) {
   if (_x3Mode) {
     // X3 AA pipeline: LSB->0x10 + MSB->0x13, trigger 0x12 with X3 LUT bank.
     drawGrayscale = false;
@@ -1086,13 +1141,32 @@ void EInkDisplay::displayGrayBuffer(const bool turnOffScreen) {
     _x3GrayState.lsbValid = false;
     return;
   }
-
   drawGrayscale = false;
-  inGrayscaleMode = true;
+  // Only set grayscaleMode for original differential LUT (triggers grayscaleRevert on next BW display).
+  // Factory absolute LUTs handle their own cleanup via cleanupGrayscaleWithFrameBuffer.
+  // Differential modes (factoryMode=false) set inGrayscaleMode to trigger grayscaleRevert
+  // on the next BW display. Factory mode manages its own cleanup.
+  inGrayscaleMode = !factoryMode;
 
-  // activate the custom LUT for grayscale rendering and refresh
-  setCustomLUT(true, lut_grayscale);
-  refreshDisplay(FAST_REFRESH, turnOffScreen);
+  setCustomLUT(true, lut != nullptr ? lut : lut_grayscale);
+
+  if (factoryMode) {
+    // Factory absolute mode: explicit full power cycle sequence.
+    // CRITICAL: reset CTRL1 to normal — a prior HALF_REFRESH leaves CTRL1=0x40
+    // (BYPASS_RED) which would ignore RED RAM and break 4-level grayscale.
+    sendCommand(CMD_DISPLAY_UPDATE_CTRL1);
+    sendData(CTRL1_NORMAL);  // 0x00
+    // 0xC7 = CLOCK_ON(0x80) + ANALOG_ON(0x40) + DISPLAY_START(0x04) +
+    //        ANALOG_OFF(0x02) + CLOCK_OFF(0x01) — full self-contained power cycle.
+    sendCommand(CMD_DISPLAY_UPDATE_CTRL2);
+    sendData(0xC7);
+    sendCommand(CMD_MASTER_ACTIVATION);
+    waitWhileBusy("factory_gray");
+    isScreenOn = false;  // 0xC7 always powers down after update
+  } else {
+    refreshDisplay(FAST_REFRESH, turnOffScreen);
+  }
+
   setCustomLUT(false);
 }
 
