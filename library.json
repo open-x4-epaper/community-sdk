@@ -1,0 +1,43 @@
+{
+  "name": "x4-epaper-sdk",
+  "version": "1.0.0",
+  "description": "OpenX4 E-Paper Community SDK",
+  "authors": [
+    {
+      "name": "CidVonHighwind",
+      "url": "https://github.com/CidVonHighwind"
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "EInkDisplay",
+      "version": "https://github.com/Jason2866/x4-epaper-sdk/releases/latest/download/EInkDisplay.zip"
+    },
+    {
+      "name": "InputManager",
+      "version": "https://github.com/Jason2866/x4-epaper-sdk/releases/latest/download/InputManager.zip"
+    },
+    {
+      "name": "BatteryMonitor",
+      "version": "https://github.com/Jason2866/x4-epaper-sdk/releases/latest/download/BatteryMonitor.zip"
+    },
+    {
+      "name": "SDCardManager",
+      "version": "https://github.com/Jason2866/x4-epaper-sdk/releases/latest/download/SDCardManager.zip"
+    }
+  ],
+  "platforms": "espressif32",
+  "frameworks": ["arduino", "espidf"],
+  "export": {
+    "exclude": [
+      ".github",
+      "libs",
+      "tools"
+    ],
+    "include": [
+      "library.json",
+      "LICENSE",
+      "README.md"
+    ]
+  }
+}
