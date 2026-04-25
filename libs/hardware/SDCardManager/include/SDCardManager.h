@@ -1,9 +1,10 @@
 #pragma once
 
-#include <WString.h>
-#include <vector>
-#include <string>
 #include <SdFat.h>
+#include <WString.h>
+
+#include <string>
+#include <vector>
 
 class SDCardManager {
  public:
@@ -32,6 +33,9 @@ class SDCardManager {
   bool rmdir(const char* path) { return sd.rmdir(path); }
   bool rename(const char* path, const char* newPath) { return sd.rename(path, newPath); }
 
+  uint64_t sdTotalBytes() const;
+  uint64_t sdUsedBytes();
+
   bool openFileForRead(const char* moduleName, const char* path, FsFile& file);
   bool openFileForRead(const char* moduleName, const std::string& path, FsFile& file);
   bool openFileForRead(const char* moduleName, const String& path, FsFile& file);
@@ -40,13 +44,20 @@ class SDCardManager {
   bool openFileForWrite(const char* moduleName, const String& path, FsFile& file);
   bool removeDir(const char* path);
 
- static SDCardManager& getInstance() { return instance; }
+  static SDCardManager& getInstance() { return instance; }
 
  private:
   static SDCardManager instance;
 
   bool initialized = false;
   SdFat sd;
+
+  static constexpr uint32_t USED_BYTES_CACHE_TTL_MS = 20000; // 20 seconds
+
+  uint64_t cachedTotalBytes = 0;
+  uint64_t cachedUsedBytes = 0;
+  uint32_t cachedUsedBytesAt = 0;
+  bool cachedUsedBytesValid = false;
 };
 
 #define SdMan SDCardManager::getInstance()
