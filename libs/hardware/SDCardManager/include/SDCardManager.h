@@ -39,6 +39,7 @@ class SDCardManager {
   bool openFileForWrite(const char* moduleName, const std::string& path, FsFile& file);
   bool openFileForWrite(const char* moduleName, const String& path, FsFile& file);
   bool removeDir(const char* path);
+  bool format(Print* pr = nullptr);
 
  static SDCardManager& getInstance() { return instance; }
 
