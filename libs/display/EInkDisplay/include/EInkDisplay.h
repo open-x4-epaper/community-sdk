@@ -59,7 +59,7 @@ class EInkDisplay {
   void displayBuffer(RefreshMode mode = FAST_REFRESH, bool turnOffScreen = false);
   // EXPERIMENTAL: Windowed update - display only a rectangular region
   void displayWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool turnOffScreen = false);
-  void displayGrayBuffer(bool turnOffScreen = false);
+  void displayGrayBuffer(bool turnOffScreen = false, const unsigned char* lut = nullptr, bool factoryMode = false);
 
   void refreshDisplay(RefreshMode mode = FAST_REFRESH, bool turnOffScreen = false);
 
@@ -135,3 +135,9 @@ class EInkDisplay {
   void setRamArea(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
   void writeRamBuffer(uint8_t ramBuffer, const uint8_t* data, uint32_t size);
 };
+
+// Factory LUTs extracted from firmware V3.1.9_CH_X4_0117.bin.
+// Uses absolute 2-bit pixel encoding for single-pass grayscale refresh.
+// See EInkDisplay.cpp for encoding details.
+extern const unsigned char lut_factory_fast[];    // 110 bytes, 60 frames, FR=0x44
+extern const unsigned char lut_factory_quality[];  // 110 bytes, 50 frames, FR=0x22
